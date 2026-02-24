@@ -5,7 +5,6 @@ import Display from "../model/tokenDisplay.model.js";
 
 const pad = (n, width = 3) => String(n).padStart(width, "0");
 
-// hackathon-friendly: retry if unique index collision happens
 const createTokenWithRetry = async ({ department, queueDay, customer }) => {
   for (let i = 0; i < 5; i++) {
     const count = await Token.countDocuments({ queueDay });
@@ -80,7 +79,6 @@ const setStatus = async ({ tokenId, status, counterId, note }) => {
     note,
   });
 
-  // update display for department + counter
   if (counterId) {
     await Display.findOneAndUpdate(
       { department: token.department, counter: counterId },
