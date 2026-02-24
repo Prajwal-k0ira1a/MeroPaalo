@@ -1,9 +1,19 @@
 import { TrendingUp, Users, Clock } from "lucide-react";
 
 const queueData = [
-  { initials: "RK", name: "Ramesh K.",  service: "Account Opening", status: "Serving" },
-  { initials: "SP", name: "Sita P.",    service: "Cash Deposit",    status: "Waiting" },
-  { initials: "HB", name: "Hari B.",    service: "Inquiry",         status: "Waiting" },
+  {
+    initials: "RK",
+    name: "Ramesh K.",
+    service: "Account Opening",
+    status: "Serving",
+  },
+  {
+    initials: "SP",
+    name: "Sita P.",
+    service: "Cash Deposit",
+    status: "Waiting",
+  },
+  { initials: "HB", name: "Hari B.", service: "Inquiry", status: "Waiting" },
 ];
 
 export default function DashboardMock() {
@@ -26,15 +36,32 @@ export default function DashboardMock() {
       {/* Stats */}
       <div className="grid grid-cols-3 divide-x divide-slate-100 bg-white border-b border-slate-100">
         {[
-          { icon: <Users size={13} className="text-teal-600" />,    label: "Waiting", value: "12" },
-          { icon: <TrendingUp size={13} className="text-blue-500" />, label: "Served",  value: "45" },
-          { icon: <Clock size={13} className="text-violet-500" />,   label: "Avg Wait", value: "8m" },
+          {
+            icon: <Users size={13} className="text-teal-600" />,
+            label: "Waiting",
+            value: "12",
+          },
+          {
+            icon: <TrendingUp size={13} className="text-blue-500" />,
+            label: "Served",
+            value: "45",
+          },
+          {
+            icon: <Clock size={13} className="text-violet-500" />,
+            label: "Avg Wait",
+            value: "8m",
+          },
         ].map((s) => (
-          <div key={s.label} className="px-3 py-3 flex flex-col items-center gap-0.5">
+          <div
+            key={s.label}
+            className="px-3 py-3 flex flex-col items-center gap-0.5"
+          >
             <div className="flex items-center gap-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
               {s.icon} {s.label}
             </div>
-            <div className="text-2xl font-black text-slate-800 leading-tight">{s.value}</div>
+            <div className="text-2xl font-black text-slate-800 leading-tight">
+              {s.value}
+            </div>
           </div>
         ))}
       </div>
@@ -42,18 +69,23 @@ export default function DashboardMock() {
       {/* Queue List */}
       <div className="divide-y divide-slate-50">
         {queueData.map((row, i) => (
-          <div key={i} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50/70 transition-colors">
+          <div
+            key={i}
+            className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50/70 transition-colors"
+          >
             <div
-              className={`w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center text-[11px] font-bold text-white shadow-sm ${
+              className={`w-9 h-9 rounded-lg shrink-0 flex items-center justify-center text-[11px] font-bold text-white shadow-sm ${
                 row.status === "Serving"
-                  ? "bg-gradient-to-br from-teal-500 to-teal-600"
-                  : "bg-gradient-to-br from-slate-300 to-slate-400"
+                  ? "bg-linear-to-br from-teal-500 to-teal-600"
+                  : "bg-linear-to-br from-slate-300 to-slate-400"
               }`}
             >
               {row.initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-800 truncate">{row.name}</p>
+              <p className="text-sm font-semibold text-slate-800 truncate">
+                {row.name}
+              </p>
               <p className="text-xs text-slate-400 truncate">{row.service}</p>
             </div>
             <span
@@ -71,7 +103,9 @@ export default function DashboardMock() {
 
       {/* Footer */}
       <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-        <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-widest">Live • Updated just now</span>
+        <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-widest">
+          Live • Updated just now
+        </span>
         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-400 animate-pulse" />
       </div>
     </div>
