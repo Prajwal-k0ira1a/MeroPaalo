@@ -2,23 +2,26 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
     {
+        institution: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Institution",
+            required: true
+        },
+
         name: {
             type: String,
-            required: true,
-            trim: true
+            required: true
         },
 
         email: {
             type: String,
-            unique: true,
-            sparse: true,
-            lowercase: true
+            lowercase: true,
+            match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Invalid email"]
         },
 
         phone: {
             type: String,
-            unique: true,
-            sparse: true
+            match: [/^\d{10}$/, "Phone must be 10 digits"]
         },
 
         password: {
@@ -29,14 +32,12 @@ const userSchema = new mongoose.Schema(
         role: {
             type: String,
             enum: ["admin", "staff", "customer"],
-            default: "customer",
-            index: true
+            default: "customer"
         }
-
     },
     { timestamps: true }
 );
 
-const User = mongoose.model("User", userSchema)
+const User = mongoose.model("User", userSchema);
 
-export default User
+export default User;

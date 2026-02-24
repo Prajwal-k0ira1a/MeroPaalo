@@ -2,11 +2,16 @@ import mongoose from "mongoose";
 
 const tokenHistorySchema = new mongoose.Schema(
     {
+        institution: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Institution",
+            required: true
+        },
+
         token: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Token",
-            required: true,
-            index: true
+            required: true
         },
 
         counter: {
@@ -32,4 +37,4 @@ const tokenHistorySchema = new mongoose.Schema(
 
 const TokenHistory = mongoose.model("TokenHistory", tokenHistorySchema);
 
-export default TokenHistory
+export default TokenHistory;

@@ -2,10 +2,15 @@ import mongoose from "mongoose";
 
 const displaySchema = new mongoose.Schema(
     {
+        institution: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Institution",
+            required: true
+        },
+
         department: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Department",
-            index: true
+            ref: "Department"
         },
 
         counter: {
@@ -16,15 +21,11 @@ const displaySchema = new mongoose.Schema(
         currentToken: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Token"
-        },
-
-        updatedAt: {
-            type: Date,
-            default: Date.now
         }
-    }
+    },
+    { timestamps: true }
 );
 
-const Display = mongoose.model("Display", displaySchema)
+const Display = mongoose.model("Display", displaySchema);
 
-export default Display
+export default Display;

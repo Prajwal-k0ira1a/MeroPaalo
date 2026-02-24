@@ -2,11 +2,16 @@ import mongoose from "mongoose";
 
 const queueDaySchema = new mongoose.Schema(
     {
+        institution: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Institution",
+            required: true
+        },
+
         department: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Department",
-            required: true,
-            index: true
+            required: true
         },
 
         date: {
@@ -15,6 +20,7 @@ const queueDaySchema = new mongoose.Schema(
         },
 
         startTime: String,
+
         endTime: String,
 
         status: {
@@ -27,11 +33,6 @@ const queueDaySchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-queueDaySchema.index(
-    { department: 1, date: 1 },
-    { unique: true }
-);
+const QueueDay = mongoose.model("QueueDay", queueDaySchema);
 
-const QueueDay = mongoose.model("QueueDay", queueDaySchema)
-
-export default QueueDay
+export default QueueDay;

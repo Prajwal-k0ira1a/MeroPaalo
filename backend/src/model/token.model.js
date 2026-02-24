@@ -2,28 +2,32 @@ import mongoose from "mongoose";
 
 const tokenSchema = new mongoose.Schema(
     {
-        tokenNumber: {
-            type: String,
+        institution: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Institution",
             required: true
         },
 
         department: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Department",
-            required: true,
-            index: true
+            required: true
         },
 
         queueDay: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "QueueDay",
-            required: true,
-            index: true
+            required: true
         },
 
         customer: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User"
+        },
+
+        tokenNumber: {
+            type: String,
+            required: true
         },
 
         status: {
@@ -36,8 +40,7 @@ const tokenSchema = new mongoose.Schema(
                 "missed",
                 "cancelled"
             ],
-            default: "waiting",
-            index: true
+            default: "waiting"
         },
 
         issuedAt: {
@@ -46,16 +49,12 @@ const tokenSchema = new mongoose.Schema(
         },
 
         calledAt: Date,
+
         completedAt: Date
     },
     { timestamps: true }
 );
 
-tokenSchema.index(
-    { tokenNumber: 1, queueDay: 1 },
-    { unique: true }
-);
+const Token = mongoose.model("Token", tokenSchema);
 
-const Token = mongoose.model("Token", tokenSchema)
-
-export default Token
+export default Token;

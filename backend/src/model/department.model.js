@@ -2,10 +2,15 @@ import mongoose from "mongoose";
 
 const departmentSchema = new mongoose.Schema(
     {
+        institution: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Institution",
+            required: true
+        },
+
         name: {
             type: String,
-            required: true,
-            unique: true
+            required: true
         },
 
         description: String,
@@ -23,6 +28,7 @@ const departmentSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
-const Department = mongoose.model("Department", departmentSchema)
 
-export default Department
+const Department = mongoose.model("Department", departmentSchema);
+
+export default Department;
