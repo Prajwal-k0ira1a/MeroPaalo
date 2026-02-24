@@ -1,0 +1,39 @@
+import jwt from "jsonwebtoken";
+import User from "../model/user.model.js";
+
+export const protect = async (req, res, next) => {
+  try {
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith("Bearer ")) {
+      res.status(401);
+      throw new Error("Not authorized, missing token");
+    }
+
+    const token = auth.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await User.findById(decoded.id).select("-password");
+    if (!user) {
+      res.status(401);
+      throw new Error("Not authorized, user not found");
+    }
+
+    req.user = user;
+    next();
+  } catch (e) {
+    res.status(401);
+    next(new Error("Not authorized, invalid token"));
+  }
+};
+
+export const authorize = (...roles) => (req, res, next) => {
+  if (!req.user) {
+    res.status(401);
+    throw new Error("Not authorized");
+  }
+  if (!roles.includes(req.user.role)) {
+    res.status(403);
+    throw new Error("Forbidden: insufficient role");
+  }
+  next();
+};
