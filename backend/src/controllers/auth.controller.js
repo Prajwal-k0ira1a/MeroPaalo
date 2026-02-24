@@ -6,7 +6,7 @@ const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "7d" });
 
 export const register = async (req, res) => {
-  const { name, email, phone, password, role } = req.body;
+  const { name, email, phone, password, institution } = req.body;
 
   if (!name || !password || (!email && !phone)) {
     res.status(400);
@@ -23,18 +23,28 @@ export const register = async (req, res) => {
   }
 
   const hashed = await bcrypt.hash(password, 10);
+  
+// at registration, the role is always set to customer.
   const user = await User.create({
     name,
     email: email?.toLowerCase(),
     phone,
     password: hashed,
-    role: role || "customer",
+    role: "customer",
+    institution: institution || null,
   });
 
   res.status(201).json({
     success: true,
     data: {
-      user: { id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role },
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        institution: user.institution,
+      },
       token: signToken(user._id),
     },
   });
@@ -66,7 +76,14 @@ export const login = async (req, res) => {
   res.json({
     success: true,
     data: {
-      user: { id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role },
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        institution: user.institution,
+      },
       token: signToken(user._id),
     },
   });

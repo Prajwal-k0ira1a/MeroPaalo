@@ -1,54 +1,69 @@
 import Token from "../model/token.model.js";
 import QueueDay from "../model/queueDay.model.js";
+import Department from "../model/department.model.js";
 import TokenHistory from "../model/tokenHistory.model.js";
 import Display from "../model/tokenDisplay.model.js";
 
 const pad = (n, width = 3) => String(n).padStart(width, "0");
 
-const createTokenWithRetry = async ({ department, queueDay, customer }) => {
+const emitDept = (req, institutionId, departmentId, event, payload) => {
+  const io = req.app.get("io");
+  if (io) io.to(`inst:${institutionId}:dept:${departmentId}`).emit(event, payload);
+};
+
+const emitTokenRoom = (req, institutionId, tokenId, event, payload) => {
+  const io = req.app.get("io");
+  if (io) io.to(`inst:${institutionId}:token:${tokenId}`).emit(event, payload);
+};
+
+const createTokenWithRetry = async ({ institution, department, queueDay, customer }) => {
   for (let i = 0; i < 5; i++) {
-    const count = await Token.countDocuments({ queueDay });
+    const count = await Token.countDocuments({ institution, queueDay });
     const tokenNumber = pad(count + 1);
 
     try {
-      return await Token.create({ tokenNumber, department, queueDay, customer });
+      return await Token.create({ institution, tokenNumber, department, queueDay, customer: customer || null });
     } catch (e) {
-      // duplicate key => retry
       if (String(e?.message || "").includes("E11000")) continue;
       throw e;
     }
   }
-  throw new Error("Failed to generate token (too much concurrency). Try again.");
+  throw new Error("Failed to generate token. Try again.");
 };
 
 export const issueToken = async (req, res) => {
-  const { department, date } = req.body;
+  const { institution, department, date } = req.body;
 
-  if (!department) {
+  if (!institution || !department) {
     res.status(400);
-    throw new Error("department is required");
+    throw new Error("institution and department are required");
   }
 
   const targetDate = date ? new Date(date) : new Date();
   targetDate.setHours(0, 0, 0, 0);
 
-  const queueDay = await QueueDay.findOne({ department, date: targetDate, status: "active" });
+  const queueDay = await QueueDay.findOne({ institution, department, date: targetDate, status: "active" });
   if (!queueDay) {
     res.status(400);
-    throw new Error("QueueDay is not active for this department/date");
+    throw new Error("Queue is not active for this department today");
   }
 
-  const customerId = req.user?._id; // customer if logged in; optional
-  const token = await createTokenWithRetry({ department, queueDay: queueDay._id, customer: customerId });
+  const customerId = req.user?._id; // optional
+  const token = await createTokenWithRetry({ institution, department, queueDay: queueDay._id, customer: customerId });
 
   await TokenHistory.create({ token: token._id, status: "waiting", note: "Token issued" });
+
+  emitDept(req, institution, department, "token:issued", { tokenId: token._id, tokenNumber: token.tokenNumber });
+  emitDept(req, institution, department, "dashboard:changed", { department });
 
   res.status(201).json({ success: true, data: token });
 };
 
 export const listTokens = async (req, res) => {
+  const institution = req.user.institution;
   const { department, queueDay, status } = req.query;
-  const filter = {};
+
+  const filter = { institution };
   if (department) filter.department = department;
   if (queueDay) filter.queueDay = queueDay;
   if (status) filter.status = status;
@@ -62,59 +77,188 @@ export const listTokens = async (req, res) => {
   res.json({ success: true, data: tokens });
 };
 
-const setStatus = async ({ tokenId, status, counterId, note }) => {
+const setStatus = async ({ req, tokenId, status, counterId, note }) => {
+  const institution = req.user?.institution;
+
   const token = await Token.findById(tokenId);
-  if (!token) throw new Error("Token not found");
+  if (!token) {
+    const err = new Error("Token not found");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  if (institution && String(token.institution) !== String(institution)) {
+    const err = new Error("Forbidden");
+    err.statusCode = 403;
+    throw err;
+  }
 
   token.status = status;
   if (status === "called") token.calledAt = new Date();
+  if (status === "serving") token.servingAt = new Date();
   if (status === "completed") token.completedAt = new Date();
 
   await token.save();
 
   await TokenHistory.create({
     token: token._id,
-    counter: counterId,
+    counter: counterId || null,
     status,
     note,
   });
 
   if (counterId) {
     await Display.findOneAndUpdate(
-      { department: token.department, counter: counterId },
-      { department: token.department, counter: counterId, currentToken: token._id, updatedAt: new Date() },
-      { upsert: true, new: true }
+      { institution: token.institution, department: token.department, counter: counterId },
+      {
+        institution: token.institution,
+        department: token.department,
+        counter: counterId,
+        currentToken: token._id,
+        updatedAt: new Date(),
+      },
+      { upsert: true, new: true, runValidators: true }
     );
+  }
+
+  emitDept(req, token.institution, token.department, "token:updated", {
+    tokenId: token._id,
+    status,
+    counterId: counterId || null,
+  });
+  emitDept(req, token.institution, token.department, "display:updated", {
+    department: token.department,
+    counterId: counterId || null,
+  });
+  emitDept(req, token.institution, token.department, "dashboard:changed", { department: token.department });
+
+  emitTokenRoom(req, token.institution, token._id, "token:selfUpdated", { tokenId: token._id, status });
+
+  if (status === "called") {
+    emitTokenRoom(req, token.institution, token._id, "token:turnArrived", { tokenId: token._id, tokenNumber: token.tokenNumber });
   }
 
   return token;
 };
 
+export const serveNext = async (req, res) => {
+  const institution = req.user.institution;
+  const { department, counterId } = req.body;
+
+  if (!department || !counterId) {
+    res.status(400);
+    throw new Error("department and counterId are required");
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const queueDay = await QueueDay.findOne({ institution, department, date: today, status: "active" });
+  if (!queueDay) {
+    res.status(400);
+    throw new Error("Queue is not active today");
+  }
+
+  const nextToken = await Token.findOne({ institution, queueDay: queueDay._id, status: "waiting" }).sort({ issuedAt: 1 });
+  if (!nextToken) {
+    res.status(404);
+    throw new Error("No waiting tokens");
+  }
+
+  const updated = await setStatus({ req, tokenId: nextToken._id, status: "called", counterId, note: "Serve Next" });
+  res.json({ success: true, data: updated });
+};
+
 export const callToken = async (req, res) => {
   const { counterId } = req.body;
-  const token = await setStatus({ tokenId: req.params.id, status: "called", counterId, note: "Called to counter" });
+  const token = await setStatus({ req, tokenId: req.params.id, status: "called", counterId, note: "Called to counter" });
   res.json({ success: true, data: token });
 };
 
 export const serveToken = async (req, res) => {
   const { counterId } = req.body;
-  const token = await setStatus({ tokenId: req.params.id, status: "serving", counterId, note: "Service started" });
+  const token = await setStatus({ req, tokenId: req.params.id, status: "serving", counterId, note: "Service started" });
   res.json({ success: true, data: token });
 };
 
 export const completeToken = async (req, res) => {
   const { counterId } = req.body;
-  const token = await setStatus({ tokenId: req.params.id, status: "completed", counterId, note: "Service completed" });
+  const token = await setStatus({ req, tokenId: req.params.id, status: "completed", counterId, note: "Service completed" });
   res.json({ success: true, data: token });
 };
 
 export const missToken = async (req, res) => {
   const { counterId } = req.body;
-  const token = await setStatus({ tokenId: req.params.id, status: "missed", counterId, note: "Customer missed" });
+  const token = await setStatus({ req, tokenId: req.params.id, status: "missed", counterId, note: "Customer missed" });
   res.json({ success: true, data: token });
 };
 
 export const cancelToken = async (req, res) => {
-  const token = await setStatus({ tokenId: req.params.id, status: "cancelled", note: "Cancelled" });
+  const token = await setStatus({ req, tokenId: req.params.id, status: "cancelled", note: "Cancelled" });
   res.json({ success: true, data: token });
+};
+
+export const getTokenStatus = async (req, res) => {
+  const token = await Token.findById(req.params.id).select(
+    "institution department queueDay tokenNumber status issuedAt calledAt servingAt completedAt"
+  );
+
+  if (!token) {
+    res.status(404);
+    throw new Error("Token not found");
+  }
+
+  let positionInLine = 0;
+  if (token.status === "waiting") {
+    const ahead = await Token.countDocuments({
+      institution: token.institution,
+      queueDay: token.queueDay,
+      status: "waiting",
+      issuedAt: { $lt: token.issuedAt },
+    });
+    positionInLine = ahead + 1;
+  }
+
+  const dept = await Department.findById(token.department).select("avgServiceTime");
+  let avgServiceMinutes = dept?.avgServiceTime ?? 5;
+
+  const recentCompleted = await Token.find({
+    institution: token.institution,
+    queueDay: token.queueDay,
+    status: "completed",
+    calledAt: { $ne: null },
+    completedAt: { $ne: null },
+  })
+    .sort({ completedAt: -1 })
+    .limit(30)
+    .select("calledAt completedAt");
+
+  if (recentCompleted.length) {
+    const totalMs = recentCompleted.reduce((sum, t) => sum + (t.completedAt - t.calledAt), 0);
+    avgServiceMinutes = Math.max(1, Math.round(totalMs / recentCompleted.length / 60000));
+  }
+
+  const estimatedWaitTimeMinutes = token.status === "waiting" ? positionInLine * avgServiceMinutes : 0;
+
+  const nowServing = await Token.findOne({
+    institution: token.institution,
+    queueDay: token.queueDay,
+    status: { $in: ["called", "serving"] },
+  })
+    .sort({ calledAt: -1, issuedAt: -1 })
+    .select("tokenNumber status");
+
+  res.json({
+    success: true,
+    data: {
+      tokenId: token._id,
+      institution: token.institution,
+      tokenNumber: token.tokenNumber,
+      status: token.status,
+      currentServing: nowServing || null,
+      positionInLine,
+      avgServiceMinutes,
+      estimatedWaitTimeMinutes,
+    },
+  });
 };

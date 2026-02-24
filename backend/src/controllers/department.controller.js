@@ -1,17 +1,32 @@
 import Department from "../model/department.model.js";
 
 export const createDepartment = async (req, res) => {
-  const dept = await Department.create(req.body);
+  const institution = req.user.institution;
+  if (!institution) {
+    res.status(400);
+    throw new Error("Admin must belong to an institution");
+  }
+  const dept = await Department.create({ ...req.body, institution });
   res.status(201).json({ success: true, data: dept });
 };
 
 export const getDepartments = async (req, res) => {
-  const list = await Department.find().sort({ createdAt: -1 });
+  const institution = req.user?.institution || req.query.institution;
+  if (!institution) {
+    res.status(400);
+    throw new Error("institution is required");
+  }
+  const list = await Department.find({ institution }).sort({ createdAt: -1 });
   res.json({ success: true, data: list });
 };
 
 export const getDepartment = async (req, res) => {
-  const dept = await Department.findById(req.params.id);
+  const institution = req.user?.institution || req.query.institution;
+  if (!institution) {
+    res.status(400);
+    throw new Error("institution is required");
+  }
+  const dept = await Department.findOne({ _id: req.params.id, institution });
   if (!dept) {
     res.status(404);
     throw new Error("Department not found");
@@ -20,7 +35,8 @@ export const getDepartment = async (req, res) => {
 };
 
 export const updateDepartment = async (req, res) => {
-  const dept = await Department.findByIdAndUpdate(req.params.id, req.body, {
+  const institution = req.user.institution;
+  const dept = await Department.findOneAndUpdate({ _id: req.params.id, institution }, req.body, {
     new: true,
     runValidators: true,
   });
@@ -32,7 +48,8 @@ export const updateDepartment = async (req, res) => {
 };
 
 export const deleteDepartment = async (req, res) => {
-  const dept = await Department.findById(req.params.id);
+  const institution = req.user.institution;
+  const dept = await Department.findOne({ _id: req.params.id, institution });
   if (!dept) {
     res.status(404);
     throw new Error("Department not found");
