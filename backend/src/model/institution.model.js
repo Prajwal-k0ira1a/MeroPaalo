@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'
 
-const institutionSchema = await mongoose.Schema({
+const institutionSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true

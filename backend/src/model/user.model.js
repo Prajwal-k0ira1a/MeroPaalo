@@ -5,7 +5,9 @@ const userSchema = new mongoose.Schema(
         institution: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Institution",
-            required: true
+            required: function () {
+                return this.role !== "customer";
+            }
         },
 
         name: {
@@ -16,7 +18,9 @@ const userSchema = new mongoose.Schema(
         email: {
             type: String,
             lowercase: true,
-            match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Invalid email"]
+            match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Invalid email"],
+            unique: true,
+            required:true
         },
 
         phone: {
