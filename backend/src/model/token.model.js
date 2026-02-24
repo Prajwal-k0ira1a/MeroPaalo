@@ -5,56 +5,44 @@ const tokenSchema = new mongoose.Schema(
         institution: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Institution",
-            required: true
+            required: true,
+            index: true,
         },
 
         department: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Department",
-            required: true
+            required: true,
+            index: true,
         },
 
         queueDay: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "QueueDay",
-            required: true
+            required: true,
+            index: true,
         },
 
-        customer: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User"
-        },
+        customer: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
-        tokenNumber: {
-            type: String,
-            required: true
-        },
+        tokenNumber: { type: String, required: true },
 
         status: {
             type: String,
-            enum: [
-                "waiting",
-                "called",
-                "serving",
-                "completed",
-                "missed",
-                "cancelled"
-            ],
-            default: "waiting"
+            enum: ["waiting", "called", "serving", "completed", "missed", "cancelled"],
+            default: "waiting",
+            index: true,
         },
 
-        issuedAt: {
-            type: Date,
-            default: Date.now
-        },
-
+        issuedAt: { type: Date, default: Date.now },
         calledAt: Date,
-
-        completedAt: Date
+        servingAt: Date,
+        completedAt: Date,
     },
     { timestamps: true }
 );
 
-const Token = mongoose.model("Token", tokenSchema);
+tokenSchema.index({ institution: 1, queueDay: 1, tokenNumber: 1 }, { unique: true });
 
+const Token = mongoose.model("Token", tokenSchema);
 export default Token;

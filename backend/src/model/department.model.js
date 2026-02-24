@@ -5,30 +5,22 @@ const departmentSchema = new mongoose.Schema(
         institution: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Institution",
-            required: true
+            required: true,
+            index: true,
         },
 
-        name: {
-            type: String,
-            required: true
-        },
+        name: { type: String, required: true },
 
         description: String,
 
-        avgServiceTime: {
-            type: Number,
-            default: 5
-        },
+        avgServiceTime: { type: Number, default: 5 },
 
-        isActive: {
-            type: Boolean,
-            default: true
-        }
-
+        isActive: { type: Boolean, default: true },
     },
     { timestamps: true }
 );
 
-const Department = mongoose.model("Department", departmentSchema);
+departmentSchema.index({ institution: 1, name: 1 }, { unique: true });
 
+const Department = mongoose.model("Department", departmentSchema);
 export default Department;

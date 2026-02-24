@@ -5,43 +5,27 @@ const userSchema = new mongoose.Schema(
         institution: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Institution",
-            required: function () {
-                return this.role !== "customer";
-            }
+            default: null,
+            index: true,
         },
 
-        name: {
-            type: String,
-            required: true
-        },
+        name: { type: String, required: true, trim: true },
 
-        email: {
-            type: String,
-            lowercase: true,
-            match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Invalid email"],
-            unique: true,
-            required:true
-        },
+        email: { type: String, unique: true, sparse: true, lowercase: true },
 
-        phone: {
-            type: String,
-            match: [/^\d{10}$/, "Phone must be 10 digits"]
-        },
+        phone: { type: String, unique: true, sparse: true },
 
-        password: {
-            type: String,
-            required: true
-        },
+        password: { type: String, required: true },
 
         role: {
             type: String,
             enum: ["admin", "staff", "customer"],
-            default: "customer"
-        }
+            default: "customer",
+            index: true,
+        },
     },
     { timestamps: true }
 );
 
 const User = mongoose.model("User", userSchema);
-
 export default User;

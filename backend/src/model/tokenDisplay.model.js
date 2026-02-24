@@ -5,27 +5,38 @@ const displaySchema = new mongoose.Schema(
         institution: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Institution",
-            required: true
+            required: true,
+            index: true,
         },
 
         department: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Department"
+            ref: "Department",
+            required: true,
+            index: true,
         },
 
         counter: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Counter"
+            ref: "Counter",
+            required: true,
         },
 
         currentToken: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Token"
-        }
+            ref: "Token",
+            default: null,
+        },
+
+        updatedAt: {
+            type: Date,
+            default: Date.now,
+        },
     },
     { timestamps: true }
 );
 
-const Display = mongoose.model("Display", displaySchema);
+displaySchema.index({ institution: 1, department: 1, counter: 1 }, { unique: true });
 
+const Display = mongoose.model("Display", displaySchema);
 export default Display;

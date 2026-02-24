@@ -5,34 +5,28 @@ const queueDaySchema = new mongoose.Schema(
         institution: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Institution",
-            required: true
+            required: true,
+            index: true,
         },
 
         department: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Department",
-            required: true
+            required: true,
+            index: true,
         },
 
-        date: {
-            type: Date,
-            required: true
-        },
+        date: { type: Date, required: true },
 
         startTime: String,
-
         endTime: String,
 
-        status: {
-            type: String,
-            enum: ["active", "closed"],
-            default: "active"
-        }
-
+        status: { type: String, enum: ["active", "paused", "closed"], default: "active" },
     },
     { timestamps: true }
 );
 
-const QueueDay = mongoose.model("QueueDay", queueDaySchema);
+queueDaySchema.index({ institution: 1, department: 1, date: 1 }, { unique: true });
 
+const QueueDay = mongoose.model("QueueDay", queueDaySchema);
 export default QueueDay;
