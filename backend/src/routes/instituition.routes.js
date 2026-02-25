@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { asyncHandler } from "../middlewares/async.middleware.js";
 import { protect, authorize } from "../middlewares/auth.middleware.js";
-import { createInstitution, listInstitutions } from "../controllers/institution.controller.js";
+import { createInstitution, listInstitutions } from "../controllers/instituition.controller.js";
 
 const router = Router();
 
