@@ -8,7 +8,6 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon server.js",
     "seed:admin": "node src/seeds/seedAdmin.js"
-
   },
   "keywords": [],
   "author": "",
@@ -21,6 +20,7 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.2.1",
+    "nodemailer": "^8.0.1",
     "qrcode": "^1.5.4",
     "socket.io": "^4.7.5"
   },
