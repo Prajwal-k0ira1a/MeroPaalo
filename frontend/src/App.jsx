@@ -1,9 +1,10 @@
-import LandingPage from './Landing Page/LandingPage';
-import DashboardPage from './StaffAdmin/DashboardPage';
-import AdminConsolePage from './AdminConsole/AdminConsolePage';
+import LandingPage from "./Landing Page/LandingPage";
+import DashboardPage from "./StaffAdmin/DashboardPage";
+import AdminConsolePage from "./AdminConsole/AdminConsolePage";
 import { Login } from "./Authentication/Login";
 import { SignUp } from "./Authentication/SignUp";
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ForgotPassword } from "./Authentication/ForgotPassword";
+import { Routes, Route } from "react-router-dom";
 function App() {
   return (
     <Routes>
@@ -12,6 +13,7 @@ function App() {
       <Route path="/admin" element={<AdminConsolePage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
     </Routes>
   );
 }

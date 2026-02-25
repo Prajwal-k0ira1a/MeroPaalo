@@ -30,7 +30,7 @@ export const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen lg:overflow-hidden overflow-y-auto">
 
       {/* Left branded panel */}
       <LeftSidebar />
@@ -57,12 +57,6 @@ export const Login = () => {
             <h1 className="text-2xl font-extrabold text-slate-900 mb-1 tracking-tight">
               Sign in to your account
             </h1>
-            <p className="text-slate-500 text-sm">
-              Don't have an account?{' '}
-              <Link to="/signup" className="text-teal-600 font-semibold hover:text-teal-700">
-                Create one free
-              </Link>
-            </p>
           </div>
 
           {/* Role tab switcher */}
@@ -98,9 +92,9 @@ export const Login = () => {
             <div className="w-full">
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm font-semibold text-gray-800">Password</label>
-                <a href="#" className="text-xs text-teal-600 font-semibold hover:text-teal-700">
+                <Link to="/forgot-password" className="text-xs text-teal-600 font-semibold hover:text-teal-700">
                   Forgot password?
-                </a>
+                </Link>
               </div>
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
@@ -147,6 +141,13 @@ export const Login = () => {
               {isLoading ? 'Signing in…' : 'Sign In →'}
             </Button>
           </form>
+
+          <p className="text-slate-500 text-sm text-center mt-6">
+            Don't have an account?{' '}
+            <Link to="/signup" className="text-teal-600 font-semibold hover:text-teal-700">
+              Create one free
+            </Link>
+          </p>
 
           {/* Footer policy links */}
           <div className="mt-8 flex items-center justify-center gap-4 text-xs text-slate-400">
