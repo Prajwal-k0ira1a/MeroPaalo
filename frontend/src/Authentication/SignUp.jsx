@@ -1,19 +1,9 @@
 import { useState } from "react";
-import {
-  User,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  Building2,
-  CheckCircle2,
-} from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "./components/Button";
 import { Input } from "./components/Input";
 import { LeftSidebar } from "./components/LeftSidebar";
-
-const ROLES = ["Staff", "Admin"];
 
 export const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -23,7 +13,7 @@ export const SignUp = () => {
     password: "",
     confirmPassword: "",
   });
-  const [role, setRole] = useState("Staff");
+
   const [showPass, setShowPass] = useState(false);
   const [showConf, setShowConf] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +56,6 @@ export const SignUp = () => {
     setIsLoading(true);
     // TODO: replace with real API call
     setTimeout(() => {
-      console.log("SignUp:", { ...formData, role });
       setIsLoading(false);
     }, 1000);
   };
@@ -107,34 +96,10 @@ export const SignUp = () => {
                   type="text"
                   name="fullName"
                   placeholder="Ramesh Sharma"
-                  icon={User}
                   value={formData.fullName}
                   onChange={handleChange}
                   required
                 />
-              </div>
-            </div>
-
-            {/* Role selector */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                Role
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {ROLES.map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => setRole(r)}
-                    className={`py-2.5 rounded-xl border text-sm font-semibold transition-all duration-200 ${
-                      role === r
-                        ? "border-teal-500 bg-teal-50 text-teal-700 shadow-sm"
-                        : "border-gray-200 text-slate-500 hover:border-teal-300 hover:text-slate-800"
-                    }`}
-                  >
-                    {r}
-                  </button>
-                ))}
               </div>
             </div>
 
