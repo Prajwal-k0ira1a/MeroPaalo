@@ -2,11 +2,11 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../model/user.model.js";
 
-const signToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "7d" });
+const signToken = (id, role) =>
+  jwt.sign({ _id: id, role }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "7d" });
 
 export const register = async (req, res) => {
-  const { name, email, phone, password, institution } = req.body;
+  const { name, email, phone, password, institution, department } = req.body;
 
   if (!name || !password || (!email && !phone)) {
     res.status(400);
@@ -31,7 +31,14 @@ export const register = async (req, res) => {
     phone,
     password: hashed,
     role: "customer",
-    institution: institution || null,
+    institution: null,
+    department: null,
+  });
+
+  res.cookie("token", signToken(user._id, user.role), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Strict",
   });
 
   res.status(201).json({
@@ -43,9 +50,9 @@ export const register = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
-        institution: user.institution,
-      },
-      token: signToken(user._id),
+        institution: null,
+        department: null,
+      }
     },
   });
 };
@@ -73,7 +80,13 @@ export const login = async (req, res) => {
     throw new Error("Invalid credentials");
   }
 
-  res.json({
+  res.cookie("token", signToken(user._id, user.role), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Strict",
+  });
+
+  res.status(200).json({
     success: true,
     data: {
       user: {
@@ -83,8 +96,8 @@ export const login = async (req, res) => {
         phone: user.phone,
         role: user.role,
         institution: user.institution,
-      },
-      token: signToken(user._id),
+        department: user.department,
+      }
     },
   });
 };
