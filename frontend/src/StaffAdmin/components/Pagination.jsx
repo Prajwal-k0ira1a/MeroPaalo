@@ -1,18 +1,26 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 export default function Pagination() {
   return (
     <div className="flex items-center gap-1">
-      {["‹", "1", "2", "3", "›"].map((p, i) => (
+      <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+        <ChevronLeft size={14} />
+      </button>
+      {["1", "2", "3"].map((page) => (
         <button
-          key={i}
-          className={`w-8 h-8 rounded-lg text-sm flex items-center justify-center border transition-colors
-            ${p === "1"
-              ? "bg-green-500 text-white border-green-500 font-bold"
-              : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-            }`}
+          key={page}
+          className={`h-8 w-8 rounded-lg border text-sm font-medium ${
+            page === "1"
+              ? "border-teal-600 bg-teal-600 text-white"
+              : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+          }`}
         >
-          {p}
+          {page}
         </button>
       ))}
+      <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+        <ChevronRight size={14} />
+      </button>
     </div>
   );
 }

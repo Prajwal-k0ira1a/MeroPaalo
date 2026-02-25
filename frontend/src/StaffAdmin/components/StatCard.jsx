@@ -1,10 +1,14 @@
-export default function StatCard({ label, value, icon, valueColor }) {
+export default function StatCard({ label, value, icon: Icon, valueColor }) {
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm">
-      <p className="text-xs font-bold text-gray-400 tracking-widest">{label}</p>
-      <div className="flex items-center gap-3 mt-2">
-        <span className={`text-3xl font-black ${valueColor || "text-gray-900"}`}>{value}</span>
-        <span className="text-2xl">{icon}</span>
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <p className="text-[11px] font-semibold tracking-wide text-slate-500">{label}</p>
+      <div className="mt-3 flex items-center justify-between">
+        <span className={`text-3xl font-extrabold ${valueColor || "text-slate-900"}`}>{value}</span>
+        {Icon ? (
+          <div className="rounded-lg bg-slate-100 p-2">
+            <Icon size={18} className="text-slate-600" />
+          </div>
+        ) : null}
       </div>
     </div>
   );

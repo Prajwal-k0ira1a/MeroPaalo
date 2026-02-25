@@ -4,29 +4,43 @@ import Sidebar from "./components/Sidebar";
 import DashboardPage from "./pages/Dashboard";
 import QueueListPage from "./pages/QueueList";
 import ServiceHistoryPage from "./pages/ServiceHistory";
-import SettingsPage from "./pages/Settings";
 
-export default function SmartQueueApp() {
+export default function MeroPaaloStaffApp() {
   const [activeNav, setActiveNav] = useState("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const pages = {
     dashboard: <DashboardPage />,
     queue: <QueueListPage />,
     history: <ServiceHistoryPage />,
-    settings: <SettingsPage />,
   };
 
   return (
-    <div className="font-sans bg-gray-100 min-h-screen flex flex-col">
-      <Topbar />
-      <div className="flex flex-1">
-        <Sidebar activeNav={activeNav} setActiveNav={setActiveNav} />
-        <main className="flex-1 p-6 flex flex-col overflow-auto">
-          {pages[activeNav]}
-        </main>
+    <div className="flex min-h-screen flex-col overflow-hidden bg-gray-100 font-sans">
+      <Topbar onMenuClick={() => setSidebarOpen(true)} />
+
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <div className="flex min-h-0 flex-1">
+        <Sidebar
+          activeNav={activeNav}
+          setActiveNav={(nav) => {
+            setActiveNav(nav);
+            setSidebarOpen(false);
+          }}
+          sidebarOpen={sidebarOpen}
+        />
+
+        <main className="min-w-0 flex-1 overflow-auto p-4 sm:p-6">{pages[activeNav]}</main>
       </div>
-      <footer className="text-center py-4 text-xs text-gray-400 bg-white border-t border-gray-200">
-        © 2024 SmartQueue Efficiency Systems. Terminal ID: SEC-404-SQ.
+
+      <footer className="border-t border-gray-200 bg-white py-3 text-center text-xs text-gray-400 sm:py-4">
+        © 2024 MeroPaalo. All rights reserved.
       </footer>
     </div>
   );

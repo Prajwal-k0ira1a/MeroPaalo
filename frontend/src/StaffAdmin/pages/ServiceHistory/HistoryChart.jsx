@@ -54,14 +54,14 @@ const options = {
 
 export default function HistoryChart() {
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm">
+    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
       <div className="flex justify-between items-center mb-5">
         <span className="font-bold text-base text-gray-900">
           Patients Served (Today)
         </span>
         <span className="text-xs text-gray-400">Updates every hour</span>
       </div>
-      <div style={{ height: "180px" }}>
+      <div style={{ height: "180px" }} className="sm:h-[220px]">
         <Bar data={data} options={options} />
       </div>
     </div>
