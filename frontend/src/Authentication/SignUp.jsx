@@ -95,7 +95,7 @@ export const SignUp = () => {
                   label="Full Name"
                   type="text"
                   name="fullName"
-                  placeholder="Ramesh Sharma"
+                  placeholder="Sujal Shrestha"
                   value={formData.fullName}
                   onChange={handleChange}
                   required
