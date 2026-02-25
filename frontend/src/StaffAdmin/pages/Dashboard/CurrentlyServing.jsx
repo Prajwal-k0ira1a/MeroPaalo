@@ -2,8 +2,8 @@ export default function CurrentlyServing() {
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm">
       <div className="flex justify-between items-center mb-6">
-        <span className="text-xs font-bold text-green-600 tracking-widest">CURRENTLY SERVING</span>
-        <span className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-md tracking-wide">
+        <span className="text-xs font-bold text-teal-600 tracking-widest">CURRENTLY SERVING</span>
+        <span className="bg-teal-500 text-white text-xs font-bold px-3 py-1 rounded-md tracking-wide">
           PRIORITY
         </span>
       </div>
@@ -15,7 +15,7 @@ export default function CurrentlyServing() {
         </div>
       </div>
       <div className="grid grid-cols-3 gap-3">
-        <button className="flex flex-col items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white rounded-2xl py-5 transition-colors cursor-pointer">
+        <button className="flex flex-col items-center justify-center gap-2 bg-teal-500 hover:bg-teal-600 text-white rounded-2xl py-5 transition-colors cursor-pointer">
           <span className="text-xl">▶|</span>
           <span className="text-xs font-bold tracking-wide">SERVE NEXT</span>
         </button>
