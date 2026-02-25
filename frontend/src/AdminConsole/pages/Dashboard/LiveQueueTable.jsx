@@ -19,6 +19,7 @@ export default function LiveQueueTable({
   totalWaiting,
   serving,
   onServeNext,
+  queueActive,
   loading,
 }) {
   return (
@@ -47,6 +48,13 @@ export default function LiveQueueTable({
             </tr>
           </thead>
           <tbody>
+            {!queueActive && (
+              <tr className="border-t border-gray-100">
+                <td className="px-4 py-4 text-sm text-amber-700 sm:px-5" colSpan={5}>
+                  Queue is not active. Activate queue first to serve tokens.
+                </td>
+              </tr>
+            )}
             {rows.length === 0 && (
               <tr className="border-t border-gray-100">
                 <td className="px-4 py-4 text-sm text-gray-500 sm:px-5" colSpan={5}>
@@ -76,7 +84,7 @@ export default function LiveQueueTable({
                 <td className="py-2.5 pr-4 text-right sm:pr-5">
                   <button
                     onClick={onServeNext}
-                    disabled={loading}
+                    disabled={loading || !queueActive}
                     className="rounded-lg border border-teal-600 px-3 py-1 text-xs font-semibold text-teal-600 transition-colors hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Serve Next

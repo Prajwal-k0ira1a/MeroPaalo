@@ -2,8 +2,6 @@ import {
   LayoutDashboard,
   Monitor,
   Users,
-  BarChart3,
-  Settings,
   Zap,
 } from "lucide-react";
 
@@ -11,8 +9,6 @@ const navItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "counters", label: "Counters", icon: Monitor },
   { id: "staff", label: "Staff", icon: Users },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
-  { id: "settings", label: "Settings", icon: Settings },
 ];
 
 export default function AdminSidebar({ activeNav, setActiveNav }) {

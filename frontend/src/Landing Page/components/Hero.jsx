@@ -55,7 +55,7 @@ const Hero = () => {
             </div>
             <div>
               <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <CheckCircle size={14} className="text-teal-600" /> Trusted by 50+ Banks
+                <CheckCircle size={14} className="text-teal-600" /> Trusted by 50+ Institutions
               </div>
               <p className="text-xs text-slate-500 font-medium tracking-tight">Across Nepal and Southeast Asia</p>
             </div>

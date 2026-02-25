@@ -60,8 +60,13 @@ export const issueToken = async (req, res) => {
 };
 
 export const listTokens = async (req, res) => {
-  const institution = req.user.institution;
+  const institution = req.user?.institution || req.query.institution;
   const { department, queueDay, status } = req.query;
+
+  if (!institution) {
+    res.status(400);
+    throw new Error("institution is required");
+  }
 
   const filter = { institution };
   if (department) filter.department = department;
@@ -142,12 +147,12 @@ const setStatus = async ({ req, tokenId, status, counterId, note }) => {
 };
 
 export const serveNext = async (req, res) => {
-  const institution = req.user.institution;
+  const institution = req.user?.institution || req.body.institution;
   const { department, counterId } = req.body;
 
-  if (!department || !counterId) {
+  if (!institution || !department || !counterId) {
     res.status(400);
-    throw new Error("department and counterId are required");
+    throw new Error("institution, department and counterId are required");
   }
 
   const today = new Date();

@@ -10,7 +10,8 @@ export const generateQR = async (req, res) => {
         });
     }
 
-    const joinUrl = `http://localhost:3000/join?institution=${institution}&department=${department}`;
+    const clientBaseUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+    const joinUrl = `${clientBaseUrl}/join?institution=${institution}&department=${department}`;
 
     try {
         // Generate QR as buffer (binary PNG)

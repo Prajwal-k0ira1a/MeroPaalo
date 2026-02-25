@@ -1,6 +1,6 @@
 import { Bell, Calendar, Menu } from "lucide-react";
 
-export default function AdminTopbar({ onMenuClick }) {
+export default function AdminTopbar({ onMenuClick, title = "Dashboard" }) {
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-US", {
     year: "numeric",
@@ -28,7 +28,7 @@ export default function AdminTopbar({ onMenuClick }) {
         <div className="flex items-center gap-2 text-sm">
           <span className="text-gray-400 hidden sm:inline">Admin</span>
           <span className="text-gray-300 hidden sm:inline">/</span>
-          <span className="font-semibold text-gray-800">Dashboard</span>
+          <span className="font-semibold text-gray-800">{title}</span>
         </div>
       </div>
 

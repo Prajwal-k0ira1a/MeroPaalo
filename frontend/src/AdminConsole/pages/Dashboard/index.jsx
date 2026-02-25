@@ -33,6 +33,7 @@ const isSameDay = (value, base) => {
 };
 
 export default function DashboardPage() {
+  const [selectedInstitutionId, setSelectedInstitutionId] = useState("");
   const [departments, setDepartments] = useState([]);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
   const [dashboard, setDashboard] = useState(EMPTY_DASHBOARD);
@@ -41,35 +42,39 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
+  const queueActive = dashboard.queueStatus === "active";
 
-  const loadDepartments = useCallback(async () => {
-    const list = await adminApi.getDepartments();
+  const loadDepartments = useCallback(async (institutionId = selectedInstitutionId) => {
+    const list = await adminApi.getDepartments(institutionId);
     setDepartments(list);
     if (!selectedDepartmentId && list.length) {
       setSelectedDepartmentId(list[0]._id);
     }
-  }, [selectedDepartmentId]);
+  }, [selectedDepartmentId, selectedInstitutionId]);
 
-  const loadDepartmentData = useCallback(async (departmentId) => {
+  const loadDepartmentData = useCallback(async (departmentId, institutionId = selectedInstitutionId) => {
     if (!departmentId) return;
 
     const [dashboardData, tokenData, counterData] = await Promise.all([
-      adminApi.getDashboard(departmentId),
-      adminApi.getTokens(departmentId),
-      adminApi.getCounters(departmentId),
+      adminApi.getDashboard(departmentId, institutionId),
+      adminApi.getTokens(departmentId, institutionId),
+      adminApi.getCounters(departmentId, institutionId),
     ]);
 
     setDashboard(dashboardData || EMPTY_DASHBOARD);
     setTokens(tokenData || []);
     setCounters(counterData || []);
-  }, []);
+  }, [selectedInstitutionId]);
 
   useEffect(() => {
     const init = async () => {
       setLoading(true);
       setError("");
       try {
-        await loadDepartments();
+        const institutions = await adminApi.getInstitutions();
+        const institutionId = institutions?.[0]?._id || "";
+        setSelectedInstitutionId(institutionId);
+        await loadDepartments(institutionId);
       } catch (err) {
         setError(err.message || "Failed to load departments");
       } finally {
@@ -87,7 +92,7 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
       try {
-        await loadDepartmentData(selectedDepartmentId);
+        await loadDepartmentData(selectedDepartmentId, selectedInstitutionId);
       } catch (err) {
         setError(err.message || "Failed to load dashboard data");
       } finally {
@@ -96,7 +101,7 @@ export default function DashboardPage() {
     };
 
     run();
-  }, [loadDepartmentData, selectedDepartmentId]);
+  }, [loadDepartmentData, selectedDepartmentId, selectedInstitutionId]);
 
   const waitingRows = useMemo(() => {
     const today = new Date();
@@ -176,6 +181,10 @@ export default function DashboardPage() {
 
   const handleServeNext = useCallback(async () => {
     if (!selectedDepartmentId) return;
+    if (!queueActive) {
+      setError("Queue is not active. Activate queue first.");
+      return;
+    }
 
     const firstOpenCounter = counters.find((counter) => counter.status === "open");
     const fallbackCounter = counters[0];
@@ -189,29 +198,49 @@ export default function DashboardPage() {
     setActionLoading(true);
     setError("");
     try {
-      await adminApi.serveNext(selectedDepartmentId, counterId);
-      await loadDepartmentData(selectedDepartmentId);
+      await adminApi.serveNext(selectedDepartmentId, counterId, selectedInstitutionId);
+      await loadDepartmentData(selectedDepartmentId, selectedInstitutionId);
     } catch (err) {
       setError(err.message || "Failed to serve next token");
     } finally {
       setActionLoading(false);
     }
-  }, [counters, loadDepartmentData, selectedDepartmentId]);
+  }, [counters, loadDepartmentData, queueActive, selectedDepartmentId, selectedInstitutionId]);
 
   const handleIssueToken = useCallback(async () => {
-    if (!selectedDepartmentId || !dashboard.institution) return;
+    if (!selectedDepartmentId) return;
+    if (!queueActive) {
+      setError("Queue is not active. Activate queue first.");
+      return;
+    }
 
     setActionLoading(true);
     setError("");
     try {
-      await adminApi.issueToken(dashboard.institution, selectedDepartmentId);
-      await loadDepartmentData(selectedDepartmentId);
+      await adminApi.issueToken(dashboard.institution || selectedInstitutionId, selectedDepartmentId);
+      await loadDepartmentData(selectedDepartmentId, selectedInstitutionId);
     } catch (err) {
       setError(err.message || "Failed to issue token");
     } finally {
       setActionLoading(false);
     }
-  }, [dashboard.institution, loadDepartmentData, selectedDepartmentId]);
+  }, [dashboard.institution, loadDepartmentData, queueActive, selectedDepartmentId, selectedInstitutionId]);
+
+  const handleActivateQueue = useCallback(async () => {
+    if (!selectedDepartmentId || !selectedInstitutionId) return;
+    const today = new Date().toISOString().slice(0, 10);
+
+    setActionLoading(true);
+    setError("");
+    try {
+      await adminApi.openQueueDay(selectedInstitutionId, selectedDepartmentId, today);
+      await loadDepartmentData(selectedDepartmentId, selectedInstitutionId);
+    } catch (err) {
+      setError(err.message || "Failed to activate queue");
+    } finally {
+      setActionLoading(false);
+    }
+  }, [loadDepartmentData, selectedDepartmentId, selectedInstitutionId]);
 
   if (!loading && departments.length === 0) {
     return (
@@ -228,7 +257,9 @@ export default function DashboardPage() {
         selectedDepartmentId={selectedDepartmentId}
         onDepartmentChange={setSelectedDepartmentId}
         onIssueToken={handleIssueToken}
+        onActivateQueue={handleActivateQueue}
         onRefresh={handleRefresh}
+        queueStatus={dashboard.queueStatus}
         loading={loading || actionLoading}
       />
 
@@ -246,6 +277,7 @@ export default function DashboardPage() {
           totalWaiting={dashboard.totalWaitingTokens ?? waitingRows.length}
           serving={dashboard.currentServingNumber}
           onServeNext={handleServeNext}
+          queueActive={queueActive}
           loading={loading || actionLoading}
         />
         <PeakHoursChart dataPoints={peakHoursData} />

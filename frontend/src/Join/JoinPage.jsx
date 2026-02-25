@@ -7,8 +7,8 @@ import LiveQueueStats from "./components/LiveQueueStats";
 import CheckInCard from "./components/CheckInCard";
 import TokenSuccessCard from "./components/TokenSuccessCard";
 import ErrorBanner from "./components/ErrorBanner";
+import { apiRequest } from "../lib/apiClient";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 const TOKEN_STORAGE_KEY = "meropaalo_customer_token";
 
 // Seed data for demonstration & development fallback
@@ -48,14 +48,9 @@ export const JoinPage = () => {
       setError("");
 
       try {
-        const res = await fetch(`${API_BASE}/public/queue/${department}/info?institution=${institution}`);
-        const json = await res.json();
-
-        if (!res.ok) {
-          // On failure, we still fallback to mock so the UI stays "Full" as requested
-          setQueueInfo(MOCK_DATA);
-          return;
-        }
+        const json = await apiRequest(
+          `/public/queue/${department}/info?institution=${institution}`
+        );
         setQueueInfo(json.data);
       } catch (err) {
         // Fallback to mock on network error
@@ -72,18 +67,15 @@ export const JoinPage = () => {
     setIsJoining(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/tokens/issue`, {
+      const json = await apiRequest("/tokens/issue", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ institution, department }),
+        body: { institution, department },
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || "Service busy. Please try again.");
       setToken(json.data);
       localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({
         tokenId: json.data._id,
         institutionId: institution,
+        departmentId: department,
         tokenNumber: json.data.tokenNumber,
       }));
     } catch (err) {

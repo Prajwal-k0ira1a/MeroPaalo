@@ -2,12 +2,12 @@ import QueueDay from "../model/queueDay.model.js";
 import Token from "../model/token.model.js";
 
 export const getAdminDashboard = async (req, res) => {
-  const institution = req.user.institution;
+  const institution = req.user?.institution || req.query.institution;
   const { department, date } = req.query;
 
   if (!institution) {
     res.status(400);
-    throw new Error("Admin must belong to an institution");
+    throw new Error("institution is required");
   }
   if (!department) {
     res.status(400);

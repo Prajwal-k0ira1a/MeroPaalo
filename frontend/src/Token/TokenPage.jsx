@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 
 import JoinHeader from "../Join/components/JoinHeader";
@@ -7,44 +7,136 @@ import TokenMainInfo from "./components/TokenMainInfo";
 import TokenActions from "./components/TokenActions";
 import JoinFooter from "../Join/components/JoinFooter";
 import ErrorBanner from "../Join/components/ErrorBanner";
+import { apiRequest } from "../lib/apiClient";
 
-// MOCK DATA MODE: All API fetching logic removed as requested
+const TOKEN_STORAGE_KEY = "meropaalo_customer_token";
 
-// Seed data for demonstration
-const MOCK_TOKEN = {
-  tokenNumber: "A-108",
-  aheadCount: 6,
-  estimatedWaitMinutes: 12,
-  status: "queue",
-  _id: "TKN-DEMO-001",
-};
-
-const MOCK_QUEUE = {
-  institutionName: "St. Jude Medical Center",
-  queueName: "General Consultation",
-  queueStatus: "active",
+const toProgressStatus = (backendStatus) => {
+  if (backendStatus === "called") return "next";
+  if (backendStatus === "serving" || backendStatus === "completed") return "serving";
+  return "queue";
 };
 
 export default function TokenPage() {
   const [searchParams] = useSearchParams();
-  // const tokenId = searchParams.get("tokenId");
-  // const institution = searchParams.get("institution");
 
-  // Strictly using Mock Data as requested
-  const [isLoading] = useState(false);
-  const [error] = useState("");
-  const [tokenData] = useState(MOCK_TOKEN);
-  const [queueInfo] = useState(MOCK_QUEUE);
-
-  useEffect(() => {
-    console.log("TokenPage: Running in Mock Data mode (No API Sync).");
+  const persistedToken = useMemo(() => {
+    try {
+      const raw = localStorage.getItem(TOKEN_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
   }, []);
 
-  const handleCancel = () => {
-    if (
-      window.confirm("Are you sure you want to cancel your spot in the queue?")
-    ) {
-      alert("Ticket cancellation request sent to system.");
+  const tokenId = searchParams.get("tokenId") || persistedToken?.tokenId || "";
+  const institutionId =
+    searchParams.get("institution") || persistedToken?.institutionId || "";
+  const departmentId =
+    searchParams.get("department") || persistedToken?.departmentId || "";
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [tokenData, setTokenData] = useState(null);
+  const [queueInfo, setQueueInfo] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchTokenStatus = async () => {
+      if (!tokenId) {
+        if (!cancelled) {
+          setError("Missing tokenId. Please re-open from the issued token link.");
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const statusJson = await apiRequest(`/tokens/${tokenId}/status`);
+        if (cancelled) return;
+
+        const statusData = statusJson?.data || {};
+        setTokenData({
+          _id: statusData.tokenId,
+          tokenNumber: statusData.tokenNumber,
+          aheadCount: Math.max((statusData.positionInLine || 1) - 1, 0),
+          estimatedWaitMinutes: statusData.estimatedWaitTimeMinutes || 0,
+          status: toProgressStatus(statusData.status),
+          backendStatus: statusData.status,
+          currentServingNumber: statusData.currentServing?.tokenNumber || null,
+        });
+        setError("");
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message || "Failed to fetch token status.");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchTokenStatus();
+    const timer = setInterval(fetchTokenStatus, 10000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [tokenId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchQueueInfo = async () => {
+      if (!institutionId || !departmentId) {
+        setQueueInfo((prev) => ({
+          institutionName: prev?.institutionName || "MeroPaalo Queue",
+          queueName: prev?.queueName || "General Service",
+          queueStatus: prev?.queueStatus || "active",
+        }));
+        return;
+      }
+
+      try {
+        const queueJson = await apiRequest(
+          `/public/queue/${departmentId}/info?institution=${institutionId}`
+        );
+        if (!cancelled) {
+          setQueueInfo(queueJson?.data || null);
+        }
+      } catch {
+        if (!cancelled) {
+          setQueueInfo({
+            institutionName: "MeroPaalo Queue",
+            queueName: "General Service",
+            queueStatus: "active",
+          });
+        }
+      }
+    };
+
+    fetchQueueInfo();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [institutionId, departmentId]);
+
+  const handleCancel = async () => {
+    if (!tokenId) return;
+    if (!window.confirm("Are you sure you want to cancel your spot in the queue?")) return;
+
+    try {
+      await apiRequest(`/tokens/${tokenId}/cancel`, { method: "PATCH" });
+      setError("");
+    } catch (err) {
+      setError(
+        err.message ||
+          "This token cannot be cancelled from customer view. Please contact staff."
+      );
     }
   };
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import AdminSidebar from "./components/AdminSidebar";
 import AdminTopbar from "./components/AdminTopbar";
 import DashboardPage from "./pages/Dashboard";
+import CountersPage from "./pages/Counters";
 
 export default function AdminConsolePage() {
   const [activeNav, setActiveNav] = useState("dashboard");
@@ -9,7 +10,15 @@ export default function AdminConsolePage() {
 
   const pages = {
     dashboard: <DashboardPage />,
+    counters: <CountersPage />,
   };
+
+  const pageTitle =
+    activeNav === "counters"
+      ? "Counters"
+      : activeNav === "staff"
+        ? "Staff"
+        : "Dashboard";
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -39,7 +48,7 @@ export default function AdminConsolePage() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
-        <AdminTopbar onMenuClick={() => setSidebarOpen(true)} />
+        <AdminTopbar onMenuClick={() => setSidebarOpen(true)} title={pageTitle} />
         <main className="flex-1 px-4 py-4 sm:px-6 md:px-8 overflow-auto lg:overflow-hidden min-h-0">
           {pages[activeNav] || (
             <p className="text-gray-400 text-sm">Page coming soon...</p>

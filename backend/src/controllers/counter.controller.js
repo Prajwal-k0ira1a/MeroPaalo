@@ -3,12 +3,12 @@ import Department from "../model/department.model.js";
 import User from "../model/user.model.js";
 
 export const createCounter = async (req, res) => {
-  const institution = req.user.institution;
+  const institution = req.user?.institution || req.body.institution || req.query.institution;
   const { department } = req.body;
 
   if (!institution) {
     res.status(400);
-    throw new Error("Admin must belong to an institution");
+    throw new Error("institution is required");
   }
   if (!department) {
     res.status(400);
@@ -46,7 +46,11 @@ export const getCounters = async (req, res) => {
 };
 
 export const updateCounter = async (req, res) => {
-  const institution = req.user.institution;
+  const institution = req.user?.institution || req.body.institution || req.query.institution;
+  if (!institution) {
+    res.status(400);
+    throw new Error("institution is required");
+  }
   const counter = await Counter.findOneAndUpdate({ _id: req.params.id, institution }, req.body, {
     new: true,
     runValidators: true,
@@ -59,8 +63,13 @@ export const updateCounter = async (req, res) => {
 };
 
 export const assignStaff = async (req, res) => {
-  const institution = req.user.institution;
+  const institution = req.user?.institution || req.body.institution || req.query.institution;
   const { staffId } = req.body;
+
+  if (!institution) {
+    res.status(400);
+    throw new Error("institution is required");
+  }
 
   const counter = await Counter.findOne({ _id: req.params.id, institution });
   if (!counter) {

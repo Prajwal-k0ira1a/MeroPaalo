@@ -5,9 +5,13 @@ export default function DashboardHeader({
   selectedDepartmentId,
   onDepartmentChange,
   onIssueToken,
+  onActivateQueue,
   onRefresh,
+  queueStatus,
   loading,
 }) {
+  const queueActive = queueStatus === "active";
+
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       <div>
@@ -39,8 +43,16 @@ export default function DashboardHeader({
         </button>
 
         <button
-          onClick={onIssueToken}
+          onClick={onActivateQueue}
           disabled={loading || !selectedDepartmentId}
+          className="h-9 rounded-lg border border-teal-600 px-3 text-xs font-semibold text-teal-700 hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {queueActive ? "Queue Active" : "Activate Queue"}
+        </button>
+
+        <button
+          onClick={onIssueToken}
+          disabled={loading || !selectedDepartmentId || !queueActive}
           className="flex h-9 items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 text-xs font-semibold text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Plus size={14} />

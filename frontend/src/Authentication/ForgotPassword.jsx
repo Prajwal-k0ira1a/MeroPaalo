@@ -4,20 +4,26 @@ import { Link } from "react-router-dom";
 import { Button } from "./components/Button";
 import { Input } from "./components/Input";
 import { LeftSidebar } from "./components/LeftSidebar";
+import { authService } from "./authService";
 
 export const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
     setIsLoading(true);
-    // TODO: replace with real API call
-    setTimeout(() => {
+    try {
+      await authService.forgotPassword(email);
       setIsSubmitted(true);
+    } catch (err) {
+      setError(err.message || "Failed to send reset link.");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -54,6 +60,11 @@ export const ForgotPassword = () => {
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 font-medium">
+                    {error}
+                  </div>
+                )}
                 <Input
                   label="Work Email"
                   type="email"

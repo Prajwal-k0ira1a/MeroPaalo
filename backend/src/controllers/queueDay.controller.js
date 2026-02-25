@@ -23,12 +23,12 @@ export const getQueueDays = async (req, res) => {
 };
 
 export const openQueueDay = async (req, res) => {
-  const institution = req.user.institution;
+  const institution = req.user?.institution || req.body.institution || req.query.institution;
   const { department, date, startTime, endTime } = req.body;
 
   if (!institution) {
     res.status(400);
-    throw new Error("Admin must belong to an institution");
+    throw new Error("institution is required");
   }
   if (!department || !date) {
     res.status(400);
