@@ -35,7 +35,7 @@ export const SignUp = () => {
     if (/[A-Z]/.test(pass)) score++;
     if (/[0-9]/.test(pass)) score++;
     if (/[^A-Za-z0-9]/.test(pass)) score++;
-    return score; // 0–4
+    return score; // 0-4
   };
 
   const strength = getStrength(formData.password);
@@ -63,7 +63,11 @@ export const SignUp = () => {
     setError("");
     setIsLoading(true);
     try {
-      await authService.register(formData.fullName, formData.email, formData.password);
+      await authService.register(
+        formData.fullName,
+        formData.email,
+        formData.password,
+      );
       navigate("/login");
     } catch (err) {
       setError(err.message || "Registration failed. Please try again.");
@@ -71,7 +75,6 @@ export const SignUp = () => {
       setIsLoading(false);
     }
   };
-
 
   return (
     <div className="flex h-screen lg:overflow-hidden overflow-y-auto">
@@ -262,7 +265,7 @@ export const SignUp = () => {
                 (formData.confirmPassword && !passwordsMatch)
               }
             >
-              {isLoading ? "Creating account…" : "Create Account →"}
+              {isLoading ? "Creating account..." : "Create Account ->"}
             </Button>
           </form>
 

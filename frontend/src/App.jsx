@@ -6,12 +6,15 @@ import { SignUp } from "./Authentication/SignUp";
 import { ForgotPassword } from "./Authentication/ForgotPassword";
 import { JoinPage } from "./Join/JoinPage";
 import { QRGeneratorPage } from "./Join/QRGeneratorPage";
+import TokenPage from "./Token/TokenPage";
 import { Routes, Route } from "react-router-dom";
+
 function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/join" element={<JoinPage />} />
+      <Route path="/token-status" element={<TokenPage />} />
 
       <Route path="/qr-generator" element={<QRGeneratorPage />} />
       <Route path="/staff-admin" element={<DashboardPage />} />
