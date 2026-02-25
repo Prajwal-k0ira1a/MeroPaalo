@@ -35,11 +35,7 @@ export const register = async (req, res) => {
     department: null,
   });
 
-  res.cookie("token", signToken(user._id, user.role), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
-  });
+  res.cookie("token", signToken(user._id, user.role), getCookieOptions());
 
   res.status(201).json({
     success: true,
@@ -80,11 +76,7 @@ export const login = async (req, res) => {
     throw new Error("Invalid credentials");
   }
 
-  res.cookie("token", signToken(user._id, user.role), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
-  });
+  res.cookie("token", signToken(user._id, user.role), getCookieOptions());
 
   res.status(200).json({
     success: true,
@@ -102,11 +94,7 @@ export const login = async (req, res) => {
   });
 };
 export const logout = async (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
-  });
+  res.clearCookie("token", getCookieOptions());
 
   return res.status(200).json({
     success: true,
