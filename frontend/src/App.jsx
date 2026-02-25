@@ -4,11 +4,16 @@ import AdminConsolePage from "./AdminConsole/AdminConsolePage";
 import { Login } from "./Authentication/Login";
 import { SignUp } from "./Authentication/SignUp";
 import { ForgotPassword } from "./Authentication/ForgotPassword";
+import { JoinPage } from "./Join/JoinPage";
+import { QRGeneratorPage } from "./Join/QRGeneratorPage";
 import { Routes, Route } from "react-router-dom";
 function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/join" element={<JoinPage />} />
+
+      <Route path="/qr-generator" element={<QRGeneratorPage />} />
       <Route path="/staff-admin" element={<DashboardPage />} />
       <Route path="/admin" element={<AdminConsolePage />} />
       <Route path="/login" element={<Login />} />
