@@ -8,6 +8,7 @@ import adminRoutes from "./admin.routes.js";
 import publicRoutes from "./public.routes.js";
 import userRoutes from "./user.routes.js";
 import qrRouter from "./qr.routes.js";
+import institutionRoutes from "./instituition.routes.js";
 import express from 'express';
 
 const router = express.Router()
@@ -22,6 +23,7 @@ router.use("/admin", adminRoutes);
 router.use("/public", publicRoutes);
 router.use("/users", userRoutes);
 router.use("/qr", qrRouter);
+router.use("/institutions", institutionRoutes);
 
 
 export default router
