@@ -7,10 +7,6 @@ import { LeftSidebar } from './components/LeftSidebar';
 
 const USER_TYPES = ['Staff', 'Admin'];
 
-/**
- * Login Page
- * Layout: dark branded sidebar (lg+) + white form panel
- */
 export const Login = () => {
   const [userType, setUserType] = useState('Staff');
   const [formData, setFormData] = useState({ email: '', password: '' });
