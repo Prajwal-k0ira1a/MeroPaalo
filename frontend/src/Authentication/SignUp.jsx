@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, CheckCircle2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./components/Button";
 import { Input } from "./components/Input";
 import { LeftSidebar } from "./components/LeftSidebar";
+import { authService } from "./authService";
 
 export const SignUp = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: "",
-    institution: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -18,9 +19,11 @@ export const SignUp = () => {
   const [showConf, setShowConf] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setError("");
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -53,12 +56,22 @@ export const SignUp = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!agreed) return;
+    if (!passwordsMatch) {
+      setError("Passwords do not match.");
+      return;
+    }
+    setError("");
     setIsLoading(true);
-    // TODO: replace with real API call
-    setTimeout(() => {
+    try {
+      await authService.register(formData.fullName, formData.email, formData.password);
+      navigate("/login");
+    } catch (err) {
+      setError(err.message || "Registration failed. Please try again.");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
+
 
   return (
     <div className="flex h-screen lg:overflow-hidden overflow-y-auto">
@@ -88,6 +101,11 @@ export const SignUp = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 font-medium">
+                {error}
+              </div>
+            )}
             {/* Full name + Role row */}
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">

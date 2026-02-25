@@ -1,32 +1,45 @@
 import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from './components/Button';
 import { Input } from './components/Input';
 import { LeftSidebar } from './components/LeftSidebar';
+import { authService } from './authService';
 
 const USER_TYPES = ['Staff', 'Admin'];
 
 export const Login = () => {
+  const navigate = useNavigate();
   const [userType, setUserType] = useState('Staff');
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPass, setShowPass] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setError('');
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
-    // TODO: replace with real API call
-    setTimeout(() => {
-      console.log('Login:', { userType, ...formData, rememberMe });
+    try {
+      const user = await authService.login(formData.email, formData.password);
+      // Redirect based on role returned by the server
+      if (user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/staff-admin');
+      }
+    } catch (err) {
+      setError(err.message || 'Login failed. Please try again.');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -77,6 +90,11 @@ export const Login = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 font-medium">
+                {error}
+              </div>
+            )}
             <Input
               label="Work Email"
               type="email"

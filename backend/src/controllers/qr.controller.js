@@ -10,20 +10,20 @@ export const generateQR = async (req, res) => {
         });
     }
 
-    // Change frontend URL if different
     const joinUrl = `http://localhost:3000/join?institution=${institution}&department=${department}`;
 
     try {
-        const qrImage = await QRCode.toDataURL(joinUrl);
+        // Generate QR as buffer (binary PNG)
+        const qrBuffer = await QRCode.toBuffer(joinUrl);
 
-        res.json({
-            success: true,
-            data: {
-                joinUrl,
-                qrImage, // base64 image
-            },
+        // Send as PNG image
+        res.writeHead(200, {
+            "Content-Type": "image/png",
+            "Content-Disposition": "inline; filename=qr.png",
         });
+        res.end(qrBuffer);
     } catch (err) {
+        console.error(err);
         res.status(500).json({
             success: false,
             message: "Failed to generate QR",
