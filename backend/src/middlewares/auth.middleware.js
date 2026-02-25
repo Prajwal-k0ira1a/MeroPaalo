@@ -26,14 +26,16 @@ export const protect = async (req, res, next) => {
   }
 };
 
-export const authorize = (...roles) => (req, res, next) => {
-  if (!req.user) {
-    res.status(401);
-    throw new Error("Not authorized");
-  }
-  if (!roles.includes(req.user.role)) {
-    res.status(403);
-    throw new Error("Forbidden: insufficient role");
-  }
-  next();
-};
+export const authorize =
+  (...roles) =>
+  (req, res, next) => {
+    if (!req.user) {
+      res.status(401);
+      throw new Error("Not authorized");
+    }
+    if (!roles.includes(req.user.role)) {
+      res.status(403);
+      throw new Error("Forbidden: insufficient role");
+    }
+    next();
+  };

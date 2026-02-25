@@ -39,26 +39,31 @@ connectDB()
 
     io.on("connection", (socket) => {
       socket.on("joinDepartment", ({ institutionId, departmentId }) => {
-        if (institutionId && departmentId) socket.join(`inst:${institutionId}:dept:${departmentId}`);
+        if (institutionId && departmentId)
+          socket.join(`inst:${institutionId}:dept:${departmentId}`);
       });
 
       socket.on("joinToken", ({ institutionId, tokenId }) => {
-        if (institutionId && tokenId) socket.join(`inst:${institutionId}:token:${tokenId}`);
+        if (institutionId && tokenId)
+          socket.join(`inst:${institutionId}:token:${tokenId}`);
       });
 
       socket.on("leaveDepartment", ({ institutionId, departmentId }) => {
-        if (institutionId && departmentId) socket.leave(`inst:${institutionId}:dept:${departmentId}`);
+        if (institutionId && departmentId)
+          socket.leave(`inst:${institutionId}:dept:${departmentId}`);
       });
 
       socket.on("leaveToken", ({ institutionId, tokenId }) => {
-        if (institutionId && tokenId) socket.leave(`inst:${institutionId}:token:${tokenId}`);
+        if (institutionId && tokenId)
+          socket.leave(`inst:${institutionId}:token:${tokenId}`);
       });
     });
 
-    server.listen(port, () => console.log(`App is listening at http://localhost:${port}`));
-  }).catch((err) => {
+    server.listen(port, () =>
+      console.log(`App is listening at http://localhost:${port}`),
+    );
+  })
+  .catch((err) => {
     console.log("Error connecting DB,", err.message);
     process.exit(1);
   });
-
-  

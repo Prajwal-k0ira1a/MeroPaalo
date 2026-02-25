@@ -43,9 +43,17 @@ export const getAdminDashboard = async (req, res) => {
   }
 
   const [waitingCount, tokensToday, completedToday] = await Promise.all([
-    Token.countDocuments({ institution, queueDay: queueDay._id, status: "waiting" }),
+    Token.countDocuments({
+      institution,
+      queueDay: queueDay._id,
+      status: "waiting",
+    }),
     Token.countDocuments({ institution, queueDay: queueDay._id }),
-    Token.countDocuments({ institution, queueDay: queueDay._id, status: "completed" }),
+    Token.countDocuments({
+      institution,
+      queueDay: queueDay._id,
+      status: "completed",
+    }),
   ]);
 
   const currentServing = await Token.findOne({
@@ -69,8 +77,14 @@ export const getAdminDashboard = async (req, res) => {
 
   let averageWaitTimeMinutes = 0;
   if (recentCompleted.length) {
-    const totalMs = recentCompleted.reduce((sum, t) => sum + (t.calledAt - t.issuedAt), 0);
-    averageWaitTimeMinutes = Math.max(0, Math.round(totalMs / recentCompleted.length / 60000));
+    const totalMs = recentCompleted.reduce(
+      (sum, t) => sum + (t.calledAt - t.issuedAt),
+      0,
+    );
+    averageWaitTimeMinutes = Math.max(
+      0,
+      Math.round(totalMs / recentCompleted.length / 60000),
+    );
   }
 
   res.json({
