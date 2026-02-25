@@ -3,6 +3,7 @@ import QueueDay from "../model/queueDay.model.js";
 import Department from "../model/department.model.js";
 import TokenHistory from "../model/tokenHistory.model.js";
 import Display from "../model/tokenDisplay.model.js";
+import { getTodayDateOnly, parseDateOnly } from "../utils/dateOnly.js";
 
 const pad = (n, width = 3) => String(n).padStart(width, "0");
 
@@ -39,8 +40,11 @@ export const issueToken = async (req, res) => {
     throw new Error("department is required");
   }
 
-  const targetDate = date ? new Date(date) : new Date();
-  targetDate.setHours(0, 0, 0, 0);
+  const targetDate = date ? parseDateOnly(date) : getTodayDateOnly();
+  if (!targetDate) {
+    res.status(400);
+    throw new Error("date must be in YYYY-MM-DD format");
+  }
 
   const queueDay = await QueueDay.findOne({ department, date: targetDate, status: "active" });
   if (!queueDay) {
@@ -139,8 +143,7 @@ export const serveNext = async (req, res) => {
     throw new Error("department and counterId are required");
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getTodayDateOnly();
 
   const queueDay = await QueueDay.findOne({ department, date: today, status: "active" });
   if (!queueDay) {

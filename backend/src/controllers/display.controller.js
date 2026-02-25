@@ -1,6 +1,7 @@
 import Display from "../model/tokenDisplay.model.js";
 import Token from "../model/token.model.js";
 import QueueDay from "../model/queueDay.model.js";
+import { getTodayDateOnly } from "../utils/dateOnly.js";
 
 // public display
 export const getDisplay = async (req, res) => {
@@ -19,8 +20,7 @@ export const getDisplay = async (req, res) => {
     });
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getTodayDateOnly();
 
   const queueDay = await QueueDay.findOne({
     department,

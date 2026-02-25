@@ -41,6 +41,18 @@ export const adminApi = {
       body: { staffId },
     }),
   getUsers: (role) => request(withQuery("/users", { role })),
+  assignUserRole: (userId, role) =>
+    request(`/users/${userId}/role`, {
+      method: "PATCH",
+      body: { role },
+    }),
+  assignUserDepartment: (userId, departmentId) =>
+    request(`/users/${userId}/department`, {
+      method: "PATCH",
+      body: { departmentId: departmentId || null },
+    }),
+  getQueueDays: (departmentId) =>
+    request(withQuery("/queue-days", { department: departmentId })),
   openQueueDay: (_unusedInstitutionId, departmentId, date, startTime = "09:00", endTime = "17:00") =>
     request("/queue-days/open", {
       method: "POST",
@@ -50,6 +62,10 @@ export const adminApi = {
         startTime,
         endTime,
       },
+    }),
+  closeQueueDay: (queueDayId) =>
+    request(`/queue-days/${queueDayId}/close`, {
+      method: "PATCH",
     }),
   serveNext: (departmentId, counterId, _unusedInstitutionId) =>
     request("/tokens/serve-next", {

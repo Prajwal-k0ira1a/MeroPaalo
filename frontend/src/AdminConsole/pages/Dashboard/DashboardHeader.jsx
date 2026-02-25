@@ -6,11 +6,13 @@ export default function DashboardHeader({
   onDepartmentChange,
   onIssueToken,
   onActivateQueue,
+  onCloseQueue,
   onRefresh,
   queueStatus,
   loading,
 }) {
   const queueActive = queueStatus === "active";
+  const queueClosable = queueStatus === "active" || queueStatus === "paused";
 
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -48,6 +50,14 @@ export default function DashboardHeader({
           className="h-9 rounded-lg border border-teal-600 px-3 text-xs font-semibold text-teal-700 hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {queueActive ? "Queue Active" : "Activate Queue"}
+        </button>
+
+        <button
+          onClick={onCloseQueue}
+          disabled={loading || !selectedDepartmentId || !queueClosable}
+          className="h-9 rounded-lg border border-red-600 px-3 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Close Queue
         </button>
 
         <button

@@ -32,6 +32,20 @@ const isSameDay = (value, base) => {
   );
 };
 
+const toLocalDateOnly = (value = new Date()) => {
+  const y = value.getFullYear();
+  const m = String(value.getMonth() + 1).padStart(2, "0");
+  const d = String(value.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
+const toApiDateOnly = (value) => {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return parsed.toISOString().slice(0, 10);
+};
+
 export default function DashboardPage() {
   const [departments, setDepartments] = useState([]);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
@@ -224,12 +238,14 @@ export default function DashboardPage() {
 
   const handleActivateQueue = useCallback(async () => {
     if (!selectedDepartmentId) return;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = toLocalDateOnly();
+    const startTime = "10:00";
+    const endTime = "16:00";
 
     setActionLoading(true);
     setError("");
     try {
-      await adminApi.openQueueDay(null, selectedDepartmentId, today);
+      await adminApi.openQueueDay(null, selectedDepartmentId, today, startTime, endTime);
       await loadDepartmentData(selectedDepartmentId);
     } catch (err) {
       setError(err.message || "Failed to activate queue");
@@ -237,6 +253,37 @@ export default function DashboardPage() {
       setActionLoading(false);
     }
   }, [loadDepartmentData, selectedDepartmentId]);
+
+  const handleCloseQueue = useCallback(async () => {
+    if (!selectedDepartmentId) return;
+    if (dashboard.queueStatus === "closed") {
+      setError("Queue is already closed.");
+      return;
+    }
+
+    setActionLoading(true);
+    setError("");
+    try {
+      const today = toLocalDateOnly();
+      const queueDays = await adminApi.getQueueDays(selectedDepartmentId);
+      const activeToday = (queueDays || []).find(
+        (qd) =>
+          toApiDateOnly(qd?.date) === today &&
+          (qd?.status === "active" || qd?.status === "paused")
+      );
+
+      if (!activeToday?._id) {
+        throw new Error("No active queue-day found for today.");
+      }
+
+      await adminApi.closeQueueDay(activeToday._id);
+      await loadDepartmentData(selectedDepartmentId);
+    } catch (err) {
+      setError(err.message || "Failed to close queue");
+    } finally {
+      setActionLoading(false);
+    }
+  }, [dashboard.queueStatus, loadDepartmentData, selectedDepartmentId]);
 
   if (!loading && departments.length === 0) {
     return (
@@ -254,6 +301,7 @@ export default function DashboardPage() {
         onDepartmentChange={setSelectedDepartmentId}
         onIssueToken={handleIssueToken}
         onActivateQueue={handleActivateQueue}
+        onCloseQueue={handleCloseQueue}
         onRefresh={handleRefresh}
         queueStatus={dashboard.queueStatus}
         loading={loading || actionLoading}

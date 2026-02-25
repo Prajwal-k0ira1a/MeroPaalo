@@ -1,5 +1,6 @@
 import Department from "../model/department.model.js";
 import QueueDay from "../model/queueDay.model.js";
+import { getTodayDateOnly } from "../utils/dateOnly.js";
 
 // public API to get queue info for a department
 export const getQueueInfo = async (req, res) => {
@@ -11,8 +12,7 @@ export const getQueueInfo = async (req, res) => {
     throw new Error("Department not found or inactive");
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getTodayDateOnly();
 
   const qd = await QueueDay.findOne({
     department: dept._id,

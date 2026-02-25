@@ -8,7 +8,7 @@ import {
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "counters", label: "Counters", icon: Monitor },
-  { id: "staff", label: "Staff", icon: Users },
+  { id: "users", label: "Users", icon: Users },
 ];
 
 export default function AdminSidebar({ activeNav, setActiveNav }) {

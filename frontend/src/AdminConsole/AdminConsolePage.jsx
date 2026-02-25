@@ -3,6 +3,7 @@ import AdminSidebar from "./components/AdminSidebar";
 import AdminTopbar from "./components/AdminTopbar";
 import DashboardPage from "./pages/Dashboard";
 import CountersPage from "./pages/Counters";
+import UsersPage from "./pages/Users";
 
 export default function AdminConsolePage() {
   const [activeNav, setActiveNav] = useState("dashboard");
@@ -11,13 +12,14 @@ export default function AdminConsolePage() {
   const pages = {
     dashboard: <DashboardPage />,
     counters: <CountersPage />,
+    users: <UsersPage />,
   };
 
   const pageTitle =
     activeNav === "counters"
       ? "Counters"
-      : activeNav === "staff"
-        ? "Staff"
+      : activeNav === "users"
+        ? "Users"
         : "Dashboard";
 
   return (

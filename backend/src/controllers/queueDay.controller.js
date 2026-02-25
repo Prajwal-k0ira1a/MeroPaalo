@@ -1,6 +1,7 @@
 import QueueDay from "../model/queueDay.model.js";
 import Token from "../model/token.model.js";
 import Display from "../model/tokenDisplay.model.js";
+import { parseDateOnly } from "../utils/dateOnly.js";
 
 const emitDept = (req, departmentId, event, payload) => {
   const io = req.app.get("io");
@@ -24,8 +25,11 @@ export const openQueueDay = async (req, res) => {
     throw new Error("department and date are required");
   }
 
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
+  const d = parseDateOnly(date);
+  if (!d) {
+    res.status(400);
+    throw new Error("date must be in YYYY-MM-DD format");
+  }
 
   const qd = await QueueDay.findOneAndUpdate(
     { department, date: d },

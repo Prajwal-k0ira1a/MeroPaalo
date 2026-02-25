@@ -1,5 +1,6 @@
 import QueueDay from "../model/queueDay.model.js";
 import Token from "../model/token.model.js";
+import { getTodayDateOnly, parseDateOnly } from "../utils/dateOnly.js";
 
 export const getAdminDashboard = async (req, res) => {
   const { department, date } = req.query;
@@ -9,8 +10,11 @@ export const getAdminDashboard = async (req, res) => {
     throw new Error("department is required");
   }
 
-  const targetDate = date ? new Date(date) : new Date();
-  targetDate.setHours(0, 0, 0, 0);
+  const targetDate = date ? parseDateOnly(date) : getTodayDateOnly();
+  if (date && !targetDate) {
+    res.status(400);
+    throw new Error("date must be in YYYY-MM-DD format");
+  }
 
   const queueDay = await QueueDay.findOne({
     department,

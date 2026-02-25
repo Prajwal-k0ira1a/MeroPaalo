@@ -1,4 +1,5 @@
 import User from "../model/user.model.js";
+import Department from "../model/department.model.js";
 
 // admin assigns role to a user
 export const assignRole = async (req, res) => {
@@ -17,6 +18,9 @@ export const assignRole = async (req, res) => {
   }
 
   user.role = role;
+  if (role !== "staff") {
+    user.department = null;
+  }
   await user.save();
 
   res.json({
@@ -31,12 +35,67 @@ export const assignRole = async (req, res) => {
   });
 };
 
+export const assignDepartment = async (req, res) => {
+  const { userId } = req.params;
+  const { departmentId } = req.body;
+
+  const user = await User.findById(userId);
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  if (user.role !== "staff") {
+    res.status(400);
+    throw new Error("Only staff users can be assigned to a department");
+  }
+
+  if (!departmentId) {
+    user.department = null;
+    await user.save();
+    await user.populate("department", "name");
+
+    return res.json({
+      success: true,
+      data: {
+        id: user._id,
+        name: user.name,
+        role: user.role,
+        department: user.department,
+      },
+    });
+  }
+
+  const department = await Department.findById(departmentId).select("_id name");
+  if (!department) {
+    res.status(404);
+    throw new Error("Department not found");
+  }
+
+  user.department = department._id;
+  await user.save();
+  await user.populate("department", "name");
+
+  res.json({
+    success: true,
+    data: {
+      id: user._id,
+      name: user.name,
+      role: user.role,
+      department: user.department,
+    },
+  });
+};
+
 export const listUsers = async (req, res) => {
   const { role } = req.query;
 
   const filter = {};
   if (role) filter.role = role;
 
-  const users = await User.find(filter).select("-password").sort({ createdAt: -1 });
+  const users = await User.find(filter)
+    .select("-password")
+    .populate("department", "name")
+    .sort({ createdAt: -1 });
   res.json({ success: true, data: users });
 };
