@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminApi } from "../../api/adminApi";
 
 export default function CountersPage() {
-  const [institutionId, setInstitutionId] = useState("");
   const [departments, setDepartments] = useState([]);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
   const [counters, setCounters] = useState([]);
@@ -12,11 +11,10 @@ export default function CountersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadData = useCallback(async (instId, deptId = "") => {
-    if (!instId) return;
+  const loadData = useCallback(async (deptId = "") => {
     const [deptList, counterList, staffList, adminList] = await Promise.all([
-      adminApi.getDepartments(instId),
-      adminApi.getCounters(deptId, instId),
+      adminApi.getDepartments(),
+      adminApi.getCounters(deptId),
       adminApi.getUsers("staff"),
       adminApi.getUsers("admin"),
     ]);
@@ -36,10 +34,7 @@ export default function CountersPage() {
       setLoading(true);
       setError("");
       try {
-        const institutions = await adminApi.getInstitutions();
-        const instId = institutions?.[0]?._id || "";
-        setInstitutionId(instId);
-        await loadData(instId);
+        await loadData();
       } catch (err) {
         setError(err.message || "Failed to load counters");
       } finally {
@@ -50,12 +45,11 @@ export default function CountersPage() {
   }, [loadData]);
 
   useEffect(() => {
-    if (!institutionId) return;
     const refresh = async () => {
       setLoading(true);
       setError("");
       try {
-        await loadData(institutionId, selectedDepartmentId);
+        await loadData(selectedDepartmentId);
       } catch (err) {
         setError(err.message || "Failed to refresh counters");
       } finally {
@@ -63,22 +57,22 @@ export default function CountersPage() {
       }
     };
     refresh();
-  }, [institutionId, selectedDepartmentId, loadData]);
+  }, [selectedDepartmentId, loadData]);
 
-  const canCreate = counterName.trim() && selectedDepartmentId && institutionId;
+  const canCreate = counterName.trim() && selectedDepartmentId;
 
   const onCreate = async () => {
     if (!canCreate || creating) return;
     setCreating(true);
     setError("");
     try {
-      await adminApi.createCounter(institutionId, {
+      await adminApi.createCounter(null, {
         counterName: counterName.trim(),
         department: selectedDepartmentId,
         status: "open",
       });
       setCounterName("");
-      await loadData(institutionId, selectedDepartmentId);
+      await loadData(selectedDepartmentId);
     } catch (err) {
       setError(err.message || "Failed to create counter");
     } finally {
@@ -89,10 +83,10 @@ export default function CountersPage() {
   const onToggleStatus = async (counter) => {
     setError("");
     try {
-      await adminApi.updateCounter(counter._id, institutionId, {
+      await adminApi.updateCounter(counter._id, null, {
         status: counter.status === "open" ? "closed" : "open",
       });
-      await loadData(institutionId, selectedDepartmentId);
+      await loadData(selectedDepartmentId);
     } catch (err) {
       setError(err.message || "Failed to update counter");
     }
@@ -101,8 +95,8 @@ export default function CountersPage() {
   const onAssignStaff = async (counterId, staffId) => {
     setError("");
     try {
-      await adminApi.assignCounterStaff(counterId, institutionId, staffId || null);
-      await loadData(institutionId, selectedDepartmentId);
+      await adminApi.assignCounterStaff(counterId, null, staffId || null);
+      await loadData(selectedDepartmentId);
     } catch (err) {
       setError(err.message || "Failed to assign staff");
     }

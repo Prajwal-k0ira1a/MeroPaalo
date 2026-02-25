@@ -6,15 +6,13 @@ const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 export const QRGeneratorPage = () => {
-  const [institution, setInstitution] = useState("");
   const [department, setDepartment] = useState("");
 
-  const canGenerate = Boolean(institution.trim() && department.trim());
+  const canGenerate = Boolean(department.trim());
 
   const qrImageUrl = useMemo(() => {
     if (!canGenerate) return "";
     const params = new URLSearchParams({
-      institution: institution.trim(),
       department: department.trim(),
     });
     return `${API_BASE}/qr?${params.toString()}`;
@@ -52,19 +50,6 @@ export const QRGeneratorPage = () => {
               </h3>
 
               <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Institution Identifier
-                  </label>
-                  <input
-                    type="text"
-                    value={institution}
-                    onChange={(e) => setInstitution(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono text-slate-700 outline-none focus:border-teal-500/50 focus:ring-4 focus:ring-teal-500/5 transition-all"
-                    placeholder="Enter Institution ID"
-                  />
-                </div>
-
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                     Department Reference

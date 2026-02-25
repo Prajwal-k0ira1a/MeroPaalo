@@ -2,13 +2,8 @@ import QueueDay from "../model/queueDay.model.js";
 import Token from "../model/token.model.js";
 
 export const getAdminDashboard = async (req, res) => {
-  const institution = req.user?.institution || req.query.institution;
   const { department, date } = req.query;
 
-  if (!institution) {
-    res.status(400);
-    throw new Error("institution is required");
-  }
   if (!department) {
     res.status(400);
     throw new Error("department is required");
@@ -18,7 +13,6 @@ export const getAdminDashboard = async (req, res) => {
   targetDate.setHours(0, 0, 0, 0);
 
   const queueDay = await QueueDay.findOne({
-    institution,
     department,
     date: targetDate,
     status: { $in: ["active", "paused"] },
@@ -30,7 +24,6 @@ export const getAdminDashboard = async (req, res) => {
     return res.json({
       success: true,
       data: {
-        institution,
         department,
         queueStatus,
         currentServingNumber: null,
@@ -44,20 +37,17 @@ export const getAdminDashboard = async (req, res) => {
 
   const [waitingCount, tokensToday, completedToday] = await Promise.all([
     Token.countDocuments({
-      institution,
       queueDay: queueDay._id,
       status: "waiting",
     }),
-    Token.countDocuments({ institution, queueDay: queueDay._id }),
+    Token.countDocuments({ queueDay: queueDay._id }),
     Token.countDocuments({
-      institution,
       queueDay: queueDay._id,
       status: "completed",
     }),
   ]);
 
   const currentServing = await Token.findOne({
-    institution,
     queueDay: queueDay._id,
     status: { $in: ["called", "serving"] },
   })
@@ -65,7 +55,6 @@ export const getAdminDashboard = async (req, res) => {
     .select("tokenNumber status");
 
   const recentCompleted = await Token.find({
-    institution,
     queueDay: queueDay._id,
     status: "completed",
     issuedAt: { $ne: null },
@@ -90,7 +79,6 @@ export const getAdminDashboard = async (req, res) => {
   res.json({
     success: true,
     data: {
-      institution,
       department,
       queueStatus,
       currentServingNumber: currentServing?.tokenNumber || null,

@@ -6,23 +6,23 @@ import Display from "../model/tokenDisplay.model.js";
 
 const pad = (n, width = 3) => String(n).padStart(width, "0");
 
-const emitDept = (req, institutionId, departmentId, event, payload) => {
+const emitDept = (req, departmentId, event, payload) => {
   const io = req.app.get("io");
-  if (io) io.to(`inst:${institutionId}:dept:${departmentId}`).emit(event, payload);
+  if (io) io.to(`dept:${departmentId}`).emit(event, payload);
 };
 
-const emitTokenRoom = (req, institutionId, tokenId, event, payload) => {
+const emitTokenRoom = (req, tokenId, event, payload) => {
   const io = req.app.get("io");
-  if (io) io.to(`inst:${institutionId}:token:${tokenId}`).emit(event, payload);
+  if (io) io.to(`token:${tokenId}`).emit(event, payload);
 };
 
-const createTokenWithRetry = async ({ institution, department, queueDay, customer }) => {
+const createTokenWithRetry = async ({ department, queueDay, customer }) => {
   for (let i = 0; i < 5; i++) {
-    const count = await Token.countDocuments({ institution, queueDay });
+    const count = await Token.countDocuments({ queueDay });
     const tokenNumber = pad(count + 1);
 
     try {
-      return await Token.create({ institution, tokenNumber, department, queueDay, customer: customer || null });
+      return await Token.create({ tokenNumber, department, queueDay, customer: customer || null });
     } catch (e) {
       if (String(e?.message || "").includes("E11000")) continue;
       throw e;
@@ -32,43 +32,37 @@ const createTokenWithRetry = async ({ institution, department, queueDay, custome
 };
 
 export const issueToken = async (req, res) => {
-  const { institution, department, date } = req.body;
+  const { department, date } = req.body;
 
-  if (!institution || !department) {
+  if (!department) {
     res.status(400);
-    throw new Error("institution and department are required");
+    throw new Error("department is required");
   }
 
   const targetDate = date ? new Date(date) : new Date();
   targetDate.setHours(0, 0, 0, 0);
 
-  const queueDay = await QueueDay.findOne({ institution, department, date: targetDate, status: "active" });
+  const queueDay = await QueueDay.findOne({ department, date: targetDate, status: "active" });
   if (!queueDay) {
     res.status(400);
     throw new Error("Queue is not active for this department today");
   }
 
   const customerId = req.user?._id; // optional
-  const token = await createTokenWithRetry({ institution, department, queueDay: queueDay._id, customer: customerId });
+  const token = await createTokenWithRetry({ department, queueDay: queueDay._id, customer: customerId });
 
   await TokenHistory.create({ token: token._id, status: "waiting", note: "Token issued" });
 
-  emitDept(req, institution, department, "token:issued", { tokenId: token._id, tokenNumber: token.tokenNumber });
-  emitDept(req, institution, department, "dashboard:changed", { department });
+  emitDept(req, department, "token:issued", { tokenId: token._id, tokenNumber: token.tokenNumber });
+  emitDept(req, department, "dashboard:changed", { department });
 
   res.status(201).json({ success: true, data: token });
 };
 
 export const listTokens = async (req, res) => {
-  const institution = req.user?.institution || req.query.institution;
   const { department, queueDay, status } = req.query;
 
-  if (!institution) {
-    res.status(400);
-    throw new Error("institution is required");
-  }
-
-  const filter = { institution };
+  const filter = {};
   if (department) filter.department = department;
   if (queueDay) filter.queueDay = queueDay;
   if (status) filter.status = status;
@@ -83,18 +77,10 @@ export const listTokens = async (req, res) => {
 };
 
 const setStatus = async ({ req, tokenId, status, counterId, note }) => {
-  const institution = req.user?.institution;
-
   const token = await Token.findById(tokenId);
   if (!token) {
     const err = new Error("Token not found");
     err.statusCode = 404;
-    throw err;
-  }
-
-  if (institution && String(token.institution) !== String(institution)) {
-    const err = new Error("Forbidden");
-    err.statusCode = 403;
     throw err;
   }
 
@@ -114,9 +100,8 @@ const setStatus = async ({ req, tokenId, status, counterId, note }) => {
 
   if (counterId) {
     await Display.findOneAndUpdate(
-      { institution: token.institution, department: token.department, counter: counterId },
+      { department: token.department, counter: counterId },
       {
-        institution: token.institution,
         department: token.department,
         counter: counterId,
         currentToken: token._id,
@@ -126,45 +111,44 @@ const setStatus = async ({ req, tokenId, status, counterId, note }) => {
     );
   }
 
-  emitDept(req, token.institution, token.department, "token:updated", {
+  emitDept(req, token.department, "token:updated", {
     tokenId: token._id,
     status,
     counterId: counterId || null,
   });
-  emitDept(req, token.institution, token.department, "display:updated", {
+  emitDept(req, token.department, "display:updated", {
     department: token.department,
     counterId: counterId || null,
   });
-  emitDept(req, token.institution, token.department, "dashboard:changed", { department: token.department });
+  emitDept(req, token.department, "dashboard:changed", { department: token.department });
 
-  emitTokenRoom(req, token.institution, token._id, "token:selfUpdated", { tokenId: token._id, status });
+  emitTokenRoom(req, token._id, "token:selfUpdated", { tokenId: token._id, status });
 
   if (status === "called") {
-    emitTokenRoom(req, token.institution, token._id, "token:turnArrived", { tokenId: token._id, tokenNumber: token.tokenNumber });
+    emitTokenRoom(req, token._id, "token:turnArrived", { tokenId: token._id, tokenNumber: token.tokenNumber });
   }
 
   return token;
 };
 
 export const serveNext = async (req, res) => {
-  const institution = req.user?.institution || req.body.institution;
   const { department, counterId } = req.body;
 
-  if (!institution || !department || !counterId) {
+  if (!department || !counterId) {
     res.status(400);
-    throw new Error("institution, department and counterId are required");
+    throw new Error("department and counterId are required");
   }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const queueDay = await QueueDay.findOne({ institution, department, date: today, status: "active" });
+  const queueDay = await QueueDay.findOne({ department, date: today, status: "active" });
   if (!queueDay) {
     res.status(400);
     throw new Error("Queue is not active today");
   }
 
-  const nextToken = await Token.findOne({ institution, queueDay: queueDay._id, status: "waiting" }).sort({ issuedAt: 1 });
+  const nextToken = await Token.findOne({ queueDay: queueDay._id, status: "waiting" }).sort({ issuedAt: 1 });
   if (!nextToken) {
     res.status(404);
     throw new Error("No waiting tokens");
@@ -205,7 +189,7 @@ export const cancelToken = async (req, res) => {
 
 export const getTokenStatus = async (req, res) => {
   const token = await Token.findById(req.params.id).select(
-    "institution department queueDay tokenNumber status issuedAt calledAt servingAt completedAt"
+    "department queueDay tokenNumber status issuedAt calledAt servingAt completedAt"
   );
 
   if (!token) {
@@ -216,7 +200,6 @@ export const getTokenStatus = async (req, res) => {
   let positionInLine = 0;
   if (token.status === "waiting") {
     const ahead = await Token.countDocuments({
-      institution: token.institution,
       queueDay: token.queueDay,
       status: "waiting",
       issuedAt: { $lt: token.issuedAt },
@@ -228,7 +211,6 @@ export const getTokenStatus = async (req, res) => {
   let avgServiceMinutes = dept?.avgServiceTime ?? 5;
 
   const recentCompleted = await Token.find({
-    institution: token.institution,
     queueDay: token.queueDay,
     status: "completed",
     calledAt: { $ne: null },
@@ -246,7 +228,6 @@ export const getTokenStatus = async (req, res) => {
   const estimatedWaitTimeMinutes = token.status === "waiting" ? positionInLine * avgServiceMinutes : 0;
 
   const nowServing = await Token.findOne({
-    institution: token.institution,
     queueDay: token.queueDay,
     status: { $in: ["called", "serving"] },
   })
@@ -257,7 +238,6 @@ export const getTokenStatus = async (req, res) => {
     success: true,
     data: {
       tokenId: token._id,
-      institution: token.institution,
       tokenNumber: token.tokenNumber,
       status: token.status,
       currentServing: nowServing || null,

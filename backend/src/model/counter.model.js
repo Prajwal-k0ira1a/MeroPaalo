@@ -2,13 +2,6 @@ import mongoose from "mongoose";
 
 const counterSchema = new mongoose.Schema(
     {
-        institution: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Institution",
-            required: true,
-            index: true,
-        },
-
         counterName: {
             type: String,
             required: true
@@ -35,7 +28,7 @@ const counterSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-counterSchema.index({ institution: 1, department: 1, counterName: 1 }, { unique: true });
+counterSchema.index({ department: 1, counterName: 1 }, { unique: true });
 
 const Counter = mongoose.model("Counter", counterSchema);
 export default Counter;

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
-export default function TokenSuccessCard({ token, institution }) {
-    const trackingUrl = `/token-status?tokenId=${encodeURIComponent(token._id)}&institution=${encodeURIComponent(institution)}&department=${encodeURIComponent(token.department || "")}&tokenNumber=${encodeURIComponent(token.tokenNumber)}`;
+export default function TokenSuccessCard({ token }) {
+  const trackingUrl = `/token-status?tokenId=${encodeURIComponent(token._id)}&department=${encodeURIComponent(token.department || "")}&tokenNumber=${encodeURIComponent(token.tokenNumber)}`;
 
     return (
         <div className="w-full max-w-sm animate-in fade-in zoom-in duration-500">

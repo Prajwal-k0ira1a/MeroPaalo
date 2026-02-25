@@ -2,16 +2,6 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
     {
-        institution: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Institution",
-            default: null,
-            index: true,
-            required: function () {
-                return this.role === "staff";
-            },
-        },
-
         department: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Department",

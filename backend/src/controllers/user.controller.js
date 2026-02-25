@@ -1,8 +1,7 @@
 import User from "../model/user.model.js";
 
-//admin assigns role to a user
+// admin assigns role to a user
 export const assignRole = async (req, res) => {
-  const adminInstitution = req.user.institution;
   const { userId } = req.params;
   const { role } = req.body;
 
@@ -17,15 +16,6 @@ export const assignRole = async (req, res) => {
     throw new Error("User not found");
   }
 
-  // When promoting to staff, attach the admin's institution
-  if (role !== "customer") {
-    if (!adminInstitution) {
-      res.status(400);
-      throw new Error("Admin must belong to an institution to assign staff/admin");
-    }
-    user.institution = adminInstitution;
-  }
-
   user.role = role;
   await user.save();
 
@@ -37,21 +27,15 @@ export const assignRole = async (req, res) => {
       email: user.email,
       phone: user.phone,
       role: user.role,
-      institution: user.institution,
     },
   });
 };
 
 export const listUsers = async (req, res) => {
-  const institution = req.user.institution;
   const { role } = req.query;
 
   const filter = {};
   if (role) filter.role = role;
-
-  if (institution) {
-    filter.$or = [{ institution }, { role: "customer", institution: null }];
-  }
 
   const users = await User.find(filter).select("-password").sort({ createdAt: -1 });
   res.json({ success: true, data: users });

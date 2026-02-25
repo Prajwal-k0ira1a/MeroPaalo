@@ -2,13 +2,6 @@ import mongoose from "mongoose";
 
 const displaySchema = new mongoose.Schema(
     {
-        institution: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Institution",
-            required: true,
-            index: true,
-        },
-
         department: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Department",
@@ -36,7 +29,7 @@ const displaySchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-displaySchema.index({ institution: 1, department: 1, counter: 1 }, { unique: true });
+displaySchema.index({ department: 1, counter: 1 }, { unique: true });
 
 const Display = mongoose.model("Display", displaySchema);
 export default Display;

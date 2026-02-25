@@ -17,50 +17,48 @@ const withQuery = (path, query = {}) => {
 };
 
 export const adminApi = {
-  getInstitutions: () => request("/institutions"),
-  getDepartments: (institutionId) =>
-    request(withQuery("/departments", { institution: institutionId })),
-  getDashboard: (departmentId, institutionId) =>
-    request(withQuery("/admin/dashboard", { department: departmentId, institution: institutionId })),
-  getTokens: (departmentId, institutionId) =>
-    request(withQuery("/tokens", { department: departmentId, institution: institutionId })),
-  getCounters: (departmentId, institutionId) =>
-    request(withQuery("/counters", { department: departmentId, institution: institutionId })),
-  createCounter: (institutionId, payload) =>
+  getDepartments: () =>
+    request(withQuery("/departments")),
+  getDashboard: (departmentId) =>
+    request(withQuery("/admin/dashboard", { department: departmentId })),
+  getTokens: (departmentId) =>
+    request(withQuery("/tokens", { department: departmentId })),
+  getCounters: (departmentId) =>
+    request(withQuery("/counters", { department: departmentId })),
+  createCounter: (_unusedInstitutionId, payload) =>
     request("/counters", {
       method: "POST",
-      body: { institution: institutionId, ...payload },
+      body: { ...payload },
     }),
-  updateCounter: (counterId, institutionId, payload) =>
+  updateCounter: (counterId, _unusedInstitutionId, payload) =>
     request(`/counters/${counterId}`, {
       method: "PATCH",
-      body: { institution: institutionId, ...payload },
+      body: { ...payload },
     }),
-  assignCounterStaff: (counterId, institutionId, staffId) =>
+  assignCounterStaff: (counterId, _unusedInstitutionId, staffId) =>
     request(`/counters/${counterId}/assign-staff`, {
       method: "PATCH",
-      body: { institution: institutionId, staffId },
+      body: { staffId },
     }),
   getUsers: (role) => request(withQuery("/users", { role })),
-  openQueueDay: (institutionId, departmentId, date, startTime = "09:00", endTime = "17:00") =>
+  openQueueDay: (_unusedInstitutionId, departmentId, date, startTime = "09:00", endTime = "17:00") =>
     request("/queue-days/open", {
       method: "POST",
       body: {
-        institution: institutionId,
         department: departmentId,
         date,
         startTime,
         endTime,
       },
     }),
-  serveNext: (departmentId, counterId, institutionId) =>
+  serveNext: (departmentId, counterId, _unusedInstitutionId) =>
     request("/tokens/serve-next", {
       method: "POST",
-      body: { institution: institutionId, department: departmentId, counterId },
+      body: { department: departmentId, counterId },
     }),
-  issueToken: (institutionId, departmentId) =>
+  issueToken: (_unusedInstitutionId, departmentId) =>
     request("/tokens/issue", {
       method: "POST",
-      body: { institution: institutionId, department: departmentId },
+      body: { department: departmentId },
     }),
 };

@@ -33,7 +33,6 @@ const isSameDay = (value, base) => {
 };
 
 export default function DashboardPage() {
-  const [selectedInstitutionId, setSelectedInstitutionId] = useState("");
   const [departments, setDepartments] = useState([]);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
   const [dashboard, setDashboard] = useState(EMPTY_DASHBOARD);
@@ -44,37 +43,34 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const queueActive = dashboard.queueStatus === "active";
 
-  const loadDepartments = useCallback(async (institutionId = selectedInstitutionId) => {
-    const list = await adminApi.getDepartments(institutionId);
+  const loadDepartments = useCallback(async () => {
+    const list = await adminApi.getDepartments();
     setDepartments(list);
     if (!selectedDepartmentId && list.length) {
       setSelectedDepartmentId(list[0]._id);
     }
-  }, [selectedDepartmentId, selectedInstitutionId]);
+  }, [selectedDepartmentId]);
 
-  const loadDepartmentData = useCallback(async (departmentId, institutionId = selectedInstitutionId) => {
+  const loadDepartmentData = useCallback(async (departmentId) => {
     if (!departmentId) return;
 
     const [dashboardData, tokenData, counterData] = await Promise.all([
-      adminApi.getDashboard(departmentId, institutionId),
-      adminApi.getTokens(departmentId, institutionId),
-      adminApi.getCounters(departmentId, institutionId),
+      adminApi.getDashboard(departmentId),
+      adminApi.getTokens(departmentId),
+      adminApi.getCounters(departmentId),
     ]);
 
     setDashboard(dashboardData || EMPTY_DASHBOARD);
     setTokens(tokenData || []);
     setCounters(counterData || []);
-  }, [selectedInstitutionId]);
+  }, []);
 
   useEffect(() => {
     const init = async () => {
       setLoading(true);
       setError("");
       try {
-        const institutions = await adminApi.getInstitutions();
-        const institutionId = institutions?.[0]?._id || "";
-        setSelectedInstitutionId(institutionId);
-        await loadDepartments(institutionId);
+        await loadDepartments();
       } catch (err) {
         setError(err.message || "Failed to load departments");
       } finally {
@@ -92,7 +88,7 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
       try {
-        await loadDepartmentData(selectedDepartmentId, selectedInstitutionId);
+        await loadDepartmentData(selectedDepartmentId);
       } catch (err) {
         setError(err.message || "Failed to load dashboard data");
       } finally {
@@ -101,7 +97,7 @@ export default function DashboardPage() {
     };
 
     run();
-  }, [loadDepartmentData, selectedDepartmentId, selectedInstitutionId]);
+  }, [loadDepartmentData, selectedDepartmentId]);
 
   const waitingRows = useMemo(() => {
     const today = new Date();
@@ -198,14 +194,14 @@ export default function DashboardPage() {
     setActionLoading(true);
     setError("");
     try {
-      await adminApi.serveNext(selectedDepartmentId, counterId, selectedInstitutionId);
-      await loadDepartmentData(selectedDepartmentId, selectedInstitutionId);
+      await adminApi.serveNext(selectedDepartmentId, counterId);
+      await loadDepartmentData(selectedDepartmentId);
     } catch (err) {
       setError(err.message || "Failed to serve next token");
     } finally {
       setActionLoading(false);
     }
-  }, [counters, loadDepartmentData, queueActive, selectedDepartmentId, selectedInstitutionId]);
+  }, [counters, loadDepartmentData, queueActive, selectedDepartmentId]);
 
   const handleIssueToken = useCallback(async () => {
     if (!selectedDepartmentId) return;
@@ -217,30 +213,30 @@ export default function DashboardPage() {
     setActionLoading(true);
     setError("");
     try {
-      await adminApi.issueToken(dashboard.institution || selectedInstitutionId, selectedDepartmentId);
-      await loadDepartmentData(selectedDepartmentId, selectedInstitutionId);
+      await adminApi.issueToken(null, selectedDepartmentId);
+      await loadDepartmentData(selectedDepartmentId);
     } catch (err) {
       setError(err.message || "Failed to issue token");
     } finally {
       setActionLoading(false);
     }
-  }, [dashboard.institution, loadDepartmentData, queueActive, selectedDepartmentId, selectedInstitutionId]);
+  }, [loadDepartmentData, queueActive, selectedDepartmentId]);
 
   const handleActivateQueue = useCallback(async () => {
-    if (!selectedDepartmentId || !selectedInstitutionId) return;
+    if (!selectedDepartmentId) return;
     const today = new Date().toISOString().slice(0, 10);
 
     setActionLoading(true);
     setError("");
     try {
-      await adminApi.openQueueDay(selectedInstitutionId, selectedDepartmentId, today);
-      await loadDepartmentData(selectedDepartmentId, selectedInstitutionId);
+      await adminApi.openQueueDay(null, selectedDepartmentId, today);
+      await loadDepartmentData(selectedDepartmentId);
     } catch (err) {
       setError(err.message || "Failed to activate queue");
     } finally {
       setActionLoading(false);
     }
-  }, [loadDepartmentData, selectedDepartmentId, selectedInstitutionId]);
+  }, [loadDepartmentData, selectedDepartmentId]);
 
   if (!loading && departments.length === 0) {
     return (

@@ -2,13 +2,6 @@ import mongoose from "mongoose";
 
 const tokenSchema = new mongoose.Schema(
     {
-        institution: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Institution",
-            required: true,
-            index: true,
-        },
-
         department: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Department",
@@ -58,7 +51,7 @@ const tokenSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-tokenSchema.index({ institution: 1, queueDay: 1, tokenNumber: 1 }, { unique: true });
+tokenSchema.index({ queueDay: 1, tokenNumber: 1 }, { unique: true });
 
 const Token = mongoose.model("Token", tokenSchema);
 export default Token;

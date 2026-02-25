@@ -3,38 +3,27 @@ import Department from "../model/department.model.js";
 import User from "../model/user.model.js";
 
 export const createCounter = async (req, res) => {
-  const institution = req.user?.institution || req.body.institution || req.query.institution;
   const { department } = req.body;
 
-  if (!institution) {
-    res.status(400);
-    throw new Error("institution is required");
-  }
   if (!department) {
     res.status(400);
     throw new Error("department is required");
   }
 
-  const dept = await Department.findOne({ _id: department, institution });
+  const dept = await Department.findById(department);
   if (!dept) {
     res.status(404);
-    throw new Error("Department not found for this institution");
+    throw new Error("Department not found");
   }
 
-  const counter = await Counter.create({ ...req.body, institution });
+  const counter = await Counter.create({ ...req.body });
   res.status(201).json({ success: true, data: counter });
 };
 
 export const getCounters = async (req, res) => {
-  const institution = req.user?.institution || req.query.institution;
   const { department } = req.query;
 
-  if (!institution) {
-    res.status(400);
-    throw new Error("institution is required");
-  }
-
-  const filter = { institution };
+  const filter = {};
   if (department) filter.department = department;
 
   const counters = await Counter.find(filter)
@@ -46,12 +35,7 @@ export const getCounters = async (req, res) => {
 };
 
 export const updateCounter = async (req, res) => {
-  const institution = req.user?.institution || req.body.institution || req.query.institution;
-  if (!institution) {
-    res.status(400);
-    throw new Error("institution is required");
-  }
-  const counter = await Counter.findOneAndUpdate({ _id: req.params.id, institution }, req.body, {
+  const counter = await Counter.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true,
   });
@@ -63,22 +47,16 @@ export const updateCounter = async (req, res) => {
 };
 
 export const assignStaff = async (req, res) => {
-  const institution = req.user?.institution || req.body.institution || req.query.institution;
   const { staffId } = req.body;
 
-  if (!institution) {
-    res.status(400);
-    throw new Error("institution is required");
-  }
-
-  const counter = await Counter.findOne({ _id: req.params.id, institution });
+  const counter = await Counter.findById(req.params.id);
   if (!counter) {
     res.status(404);
     throw new Error("Counter not found");
   }
 
   if (staffId) {
-    const staff = await User.findById(staffId).select("role institution");
+    const staff = await User.findById(staffId).select("role");
     if (!staff) {
       res.status(404);
       throw new Error("Staff user not found");
@@ -86,10 +64,6 @@ export const assignStaff = async (req, res) => {
     if (!["staff", "admin"].includes(staff.role)) {
       res.status(400);
       throw new Error("User is not staff/admin");
-    }
-    if (String(staff.institution) !== String(institution)) {
-      res.status(400);
-      throw new Error("Staff user must belong to same institution");
     }
   }
 

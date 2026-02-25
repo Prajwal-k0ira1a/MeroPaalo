@@ -1,13 +1,18 @@
-# MeroPaalo Backend
+# MeroPaalo Backend (Single-Organization, Department-Based)
 
-Backend API for queue management, token flow, display boards, and admin/staff operations.
+Backend API for a queue management system with:
 
-## Full-Stack Setup (Frontend + Backend)
+- Departments (queues)
+- Counters and staff
+- Tokens (queue numbers)
+- Public join & status pages
+- Admin & staff dashboards
 
-This repository has both apps:
+All logic is now **department-based only**. There is **no Institution model** and no multi-organization support.
 
-- `frontend/` (React + Vite)
-- `backend/` (Node.js + Express + MongoDB)
+---
+
+## 1. Setup
 
 ### Project Structure
 
@@ -21,9 +26,9 @@ MeroPaalo/
 
 - Node.js 18+
 - npm 9+
-- MongoDB running locally or a cloud connection string
+- MongoDB (local or cloud URI)
 
-### Backend Configuration
+### Backend `.env`
 
 Create `backend/.env`:
 
@@ -36,24 +41,17 @@ CLIENT_URL=http://localhost:5173
 NODE_ENV=development
 ```
 
-### Frontend Configuration
+### Frontend `.env` (recommended)
 
-Create `frontend/.env` (optional but recommended):
+Create `frontend/.env`:
 
 ```env
 VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
-Notes:
+### Run Locally
 
-- Some frontend files already default to `http://localhost:5000/api`.
-- Frontend shared API client: `frontend/src/lib/apiClient.js`.
-
-### Run Frontend + Backend Together
-
-Open two terminals from repo root:
-
-1. Backend
+From repo root:
 
 ```bash
 cd backend
@@ -61,7 +59,7 @@ npm install
 npm run dev
 ```
 
-2. Frontend
+In another terminal:
 
 ```bash
 cd frontend
@@ -69,152 +67,116 @@ npm install
 npm run dev
 ```
 
-### Local URLs
+Local URLs:
 
 - Frontend: `http://localhost:5173`
-- Backend API: `http://localhost:5000/api`
-- Backend health check: `http://localhost:5000/`
+- API base: `http://localhost:5000/api`
+- Health: `GET http://localhost:5000/`
 
-### Integration Notes
+---
 
-- Backend CORS allows `CLIENT_URL` and credentials.
-- Login/register set auth cookie `token` (httpOnly).
-- Protected APIs accept either bearer token or `token` cookie.
-- QR endpoint uses `CLIENT_URL` to generate join links.
+## 2. Auth, Roles & Conventions
 
-## Tech Stack
+### Auth
 
-- Node.js + Express
-- MongoDB + Mongoose
-- JWT auth
-- Socket.IO (real-time events)
+Protected routes use:
 
-## Run Locally
+- `Authorization: Bearer <jwt>` **or**
+- `token` httpOnly cookie (set on login/register)
 
-1. Install dependencies
-
-```bash
-npm install
-```
-
-2. Create `.env` in `backend/` with:
-
-```env
-PORT=5000
-MONGODB_URL=your_mongo_connection_string
-JWT_SECRET=your_secret
-JWT_EXPIRES_IN=7d
-CLIENT_URL=http://localhost:5173
-NODE_ENV=development
-```
-
-3. Start server
-
-```bash
-npm run dev
-```
-
-## Base URL
-
-- API: `http://localhost:5000/api`
-- Health check: `GET http://localhost:5000/`
-
-## Auth and Authorization
-
-Protected routes use `protect` middleware and support:
-
-- `Authorization: Bearer <token>`
-- or `token` cookie (set during login/register)
-
-Role checks are handled by `authorize(...)` middleware.
-
-Roles used in the system:
+### Roles
 
 - `admin`
 - `staff`
-- `customer`
+- `customer` (default on registration)
 
-## Standard Response Shapes
+### Standard Responses
 
-Most success responses:
+Success:
 
 ```json
 {
   "success": true,
-  "data": {}
+  "data": { }
 }
 ```
 
-Most errors:
+Error (non-2xx):
 
 ```json
 {
   "success": false,
-  "message": "Something went wrong",
-  "stack": "..."
+  "message": "Error message"
 }
 ```
 
-`stack` is hidden in production (`NODE_ENV=production`).
+`stack` is included only in non-production environments.
 
 ---
 
-## Complete API Endpoints
+## 3. API Overview
 
-All paths below are relative to `/api`.
+All paths below are **relative to `/api`**.
 
-### Auth
+- `/auth` – login / register / password reset
+- `/departments` – create and manage queues
+- `/counters` – physical counters, staff assignment
+- `/queue-days` – open/close/pause/resume/reset queue for a date
+- `/tokens` – issue tokens, serve next, update status, query
+- `/display` – public & staff display info
+- `/admin` – admin dashboard stats
+- `/public` – public queue info for a department
+- `/users` – list users, assign roles
+- `/qr` – QR code generator for join URL
+
+---
+
+## 4. Endpoints by Module
+
+### 4.1 Auth (`/auth`)
 
 #### `POST /auth/register`
-Auth: Public
 
-Takes (JSON body):
+- **Auth**: Public
+- **Body**:
 
 ```json
 {
   "name": "Jane Doe",
   "email": "jane@example.com",
   "phone": "9812345678",
-  "password": "secret123",
-  "institution": "ignored_by_current_code",
-  "department": "ignored_by_current_code"
+  "password": "secret123"
 }
 ```
 
-Validation/notes:
+Rules:
 
-- Required: `name`, `password`, and at least one of `email` or `phone`.
-- Creates user with role `customer`.
-- `institution` and `department` from request are currently ignored and stored as `null`.
+- `name` and `password` required
+- At least **one** of `email` or `phone` required
+- Creates user with role `customer`
 
-Gets (201):
+**Response 201**:
 
 ```json
 {
   "success": true,
   "data": {
     "user": {
-      "id": "userObjectId",
+      "id": "userId",
       "name": "Jane Doe",
       "email": "jane@example.com",
       "phone": "9812345678",
       "role": "customer",
-      "institution": null,
       "department": null
     }
   }
 }
 ```
 
-Common errors:
-
-- `400`: missing required fields
-- `409`: user already exists
-
 #### `POST /auth/login`
-Auth: Public
 
-Takes (JSON body):
+- **Auth**: Public
+- **Body**:
 
 ```json
 {
@@ -224,40 +186,29 @@ Takes (JSON body):
 }
 ```
 
-Validation/notes:
+At least one of `email` or `phone` + `password` required.
 
-- Required: `password` and one of `email` or `phone`.
-
-Gets (200):
+**Response 200**:
 
 ```json
 {
   "success": true,
   "data": {
     "user": {
-      "id": "userObjectId",
+      "id": "userId",
       "name": "Jane Doe",
       "email": "jane@example.com",
       "phone": "9812345678",
       "role": "customer",
-      "institution": null,
       "department": null
     }
   }
 }
 ```
 
-Common errors:
-
-- `400`: missing credentials
-- `401`: invalid credentials
-
 #### `POST /auth/logout`
-Auth: Public
 
-Takes: no body required
-
-Gets (200):
+Clears auth cookie.
 
 ```json
 {
@@ -267,483 +218,175 @@ Gets (200):
 ```
 
 #### `POST /auth/forgot-password`
-Auth: Public
 
-Takes (JSON body):
-
-```json
-{
-  "email": "jane@example.com"
-}
-```
-
-Gets (200):
+Body:
 
 ```json
-{
-  "success": true,
-  "message": "If that email exists, a reset link has been sent."
-}
+{ "email": "jane@example.com" }
 ```
 
-Notes:
-
-- Returns the same response even when email is not found.
-- Reset link points to `${CLIENT_URL}/reset-password/:token`.
+Always returns 200 with generic message if user exists or not.
 
 #### `GET /auth/reset-password/:token`
-Auth: Public
 
-Takes:
-
-- path param `token`
-
-Gets (200):
-
-```json
-{
-  "success": true,
-  "message": "Valid reset token"
-}
-```
-
-Common errors:
-
-- `400`: invalid or expired token
+Validates reset token.
 
 #### `POST /auth/reset-password/:token`
-Auth: Public
 
-Takes:
-
-- path param `token`
-- JSON body:
+Body:
 
 ```json
-{
-  "password": "newSecurePassword123"
-}
+{ "password": "newPassword123" }
 ```
 
-Gets (200):
+Resets password if token is valid.
 
-```json
-{
-  "success": true,
-  "message": "Password reset successfully"
-}
-```
+---
 
-Common errors:
-
-- `400`: missing password or invalid/expired token
-- `500`: internal server error
-
-### Admin
-
-#### `GET /admin/dashboard`
-Auth: `admin`
-
-Takes (query params):
-
-- `department` (required, ObjectId)
-- `date` (optional, parseable date string)
-
-Gets (200):
-
-```json
-{
-  "success": true,
-  "data": {
-    "institution": "institutionObjectId",
-    "department": "departmentObjectId",
-    "queueStatus": "active",
-    "currentServingNumber": "003",
-    "totalWaitingTokens": 4,
-    "tokensToday": 19,
-    "averageWaitTimeMinutes": 8,
-    "totalCompletedToday": 12
-  }
-}
-```
-
-Common errors:
-
-- `400`: admin has no institution, or missing `department`
-
-### Institutions
-
-#### `POST /institutions`
-Auth: `admin`
-
-Takes (JSON body):
-
-```json
-{
-  "name": "My Branch",
-  "address": "Kathmandu",
-  "phone": "9812345678",
-  "email": "branch@example.com",
-  "status": "active",
-  "planType": "basic"
-}
-```
-
-Validation/notes:
-
-- Required: `name`
-- `status`: `active | inactive`
-- `planType`: `basic | pro`
-
-Gets (201):
-
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "institutionObjectId",
-    "name": "My Branch",
-    "address": "Kathmandu",
-    "phone": "9812345678",
-    "email": "branch@example.com",
-    "status": "active",
-    "planType": "basic",
-    "createdAt": "...",
-    "updatedAt": "..."
-  }
-}
-```
-
-#### `GET /institutions`
-Auth: `admin`
-
-Takes: no params
-
-Gets (200):
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "_id": "institutionObjectId",
-      "name": "My Branch",
-      "address": "Kathmandu",
-      "phone": "9812345678",
-      "email": "branch@example.com",
-      "status": "active",
-      "planType": "basic",
-      "createdAt": "...",
-      "updatedAt": "..."
-    }
-  ]
-}
-```
-
-### Departments
+### 4.2 Departments (`/departments`)
 
 #### `POST /departments`
-Auth: `admin`
 
-Takes (JSON body):
-
-```json
-{
-  "name": "Account Services",
-  "institutionId": "institutionObjectId"
-}
-```
-
-Validation/notes:
-
-- Controller currently expects `institutionId` in body and uses it directly.
-
-Gets (201):
-
-- Raw department object (not wrapped in `{ success, data }`):
+- **Auth**: `admin`
+- **Body**:
 
 ```json
 {
-  "_id": "departmentObjectId",
-  "institution": "institutionObjectId",
-  "name": "Account Services",
-  "description": null,
+  "name": "Outpatient",
+  "description": "Main OPD",
   "avgServiceTime": 5,
-  "isActive": true,
-  "createdAt": "...",
-  "updatedAt": "..."
+  "isActive": true
 }
 ```
+
+**Response 201**: Raw department object.
 
 #### `GET /departments`
-Auth: `admin | staff`
 
-Takes (query params):
-
-- `institution` (optional fallback; if user has no institution)
-
-Gets (200):
+- **Auth**: `admin | staff`
+- **Query**: none
+- **Response 200**:
 
 ```json
 {
   "success": true,
   "data": [
     {
-      "_id": "departmentObjectId",
-      "institution": "institutionObjectId",
-      "name": "Account Services",
-      "description": "...",
+      "_id": "departmentId",
+      "name": "Outpatient",
+      "description": "Main OPD",
       "avgServiceTime": 5,
-      "isActive": true,
-      "createdAt": "...",
-      "updatedAt": "..."
+      "isActive": true
     }
   ]
 }
 ```
 
-Common errors:
-
-- `400`: institution missing
-
 #### `GET /departments/:id`
-Auth: `admin | staff`
 
-Takes:
-
-- path param `id` (department id)
-- query `institution` optional fallback
-
-Gets (200):
-
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "departmentObjectId",
-    "institution": "institutionObjectId",
-    "name": "Account Services",
-    "description": "...",
-    "avgServiceTime": 5,
-    "isActive": true,
-    "createdAt": "...",
-    "updatedAt": "..."
-  }
-}
-```
-
-Common errors:
-
-- `400`: institution missing
-- `404`: department not found
+Fetch single department.
 
 #### `PATCH /departments/:id`
-Auth: `admin`
 
-Takes:
-
-- path param `id`
-- JSON body with updatable department fields (`name`, `description`, `avgServiceTime`, `isActive`, etc.)
-
-Gets (200):
-
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "departmentObjectId",
-    "name": "Updated Name",
-    "description": "Updated",
-    "avgServiceTime": 6,
-    "isActive": true
-  }
-}
-```
-
-Common errors:
-
-- `404`: department not found
+Update any of: `name`, `description`, `avgServiceTime`, `isActive`.
 
 #### `DELETE /departments/:id`
-Auth: `admin`
 
-Takes: path param `id`
+Delete department.
 
-Gets (200):
+---
 
-```json
-{
-  "success": true,
-  "message": "Department deleted"
-}
-```
-
-Common errors:
-
-- `404`: department not found
-
-### Counters
+### 4.3 Counters (`/counters`)
 
 #### `POST /counters`
-Auth: `admin`
 
-Takes (JSON body):
+- **Auth**: `admin`
+- **Body**:
 
 ```json
 {
   "counterName": "Counter 1",
-  "department": "departmentObjectId",
+  "department": "departmentId",
   "status": "open"
 }
 ```
 
-Validation/notes:
+`department` is required and must exist.
 
-- Required: `department`
-- `institution` is injected from authenticated user.
-
-Gets (201):
+**Response 201**:
 
 ```json
 {
   "success": true,
   "data": {
-    "_id": "counterObjectId",
-    "institution": "institutionObjectId",
+    "_id": "counterId",
     "counterName": "Counter 1",
-    "department": "departmentObjectId",
+    "department": "departmentId",
     "staff": null,
-    "status": "open",
-    "createdAt": "...",
-    "updatedAt": "..."
+    "status": "open"
   }
 }
 ```
 
-Common errors:
-
-- `400`: admin has no institution or missing `department`
-- `404`: department not found in institution
-
 #### `GET /counters`
-Auth: `admin | staff`
 
-Takes (query params):
+- **Auth**: `admin | staff`
+- **Query**:
+  - `department` (optional) – filter by department
 
-- `department` (optional)
-- `institution` (optional fallback only)
-
-Gets (200):
+**Response 200**:
 
 ```json
 {
   "success": true,
   "data": [
     {
-      "_id": "counterObjectId",
+      "_id": "counterId",
       "counterName": "Counter 1",
-      "institution": "institutionObjectId",
-      "department": {
-        "_id": "departmentObjectId",
-        "name": "Account Services"
-      },
-      "staff": {
-        "_id": "userObjectId",
-        "name": "Staff A",
-        "role": "staff"
-      },
+      "department": { "_id": "departmentId", "name": "Outpatient" },
+      "staff": { "_id": "userId", "name": "Staff A", "role": "staff" },
       "status": "open"
     }
   ]
 }
 ```
 
-Common errors:
-
-- `400`: institution missing
-
 #### `PATCH /counters/:id`
-Auth: `admin`
 
-Takes:
-
-- path param `id`
-- JSON body with updatable fields (`counterName`, `department`, `status`, `staff`)
-
-Gets (200):
-
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "counterObjectId",
-    "counterName": "Counter 2",
-    "status": "closed"
-  }
-}
-```
-
-Common errors:
-
-- `404`: counter not found
+Update any counter fields (`counterName`, `department`, `status`).
 
 #### `PATCH /counters/:id/assign-staff`
-Auth: `admin`
 
-Takes (JSON body):
-
-```json
-{
-  "staffId": "userObjectId_or_null"
-}
-```
-
-Validation/notes:
-
-- If provided, user must exist, be `staff` or `admin`, and belong to same institution.
-- Set `staffId: null` to unassign.
-
-Gets (200):
+- **Body**:
 
 ```json
-{
-  "success": true,
-  "data": {
-    "_id": "counterObjectId",
-    "staff": "userObjectId_or_null"
-  }
-}
+{ "staffId": "userId_or_null" }
 ```
 
-Common errors:
+`staffId` must be a valid user with role `staff` or `admin` (or `null` to unassign).
 
-- `404`: counter or staff user not found
-- `400`: invalid staff role/institution mismatch
+---
 
-### Queue Days
+### 4.4 Queue Days (`/queue-days`)
+
+Represents a working day for a department’s queue.
 
 #### `GET /queue-days`
-Auth: `admin | staff`
 
-Takes (query params):
+- **Auth**: `admin | staff`
+- **Query**:
+  - `department` (optional) – filter by department
 
-- `department` (optional)
-- `institution` (optional fallback only)
-
-Gets (200):
+**Response**:
 
 ```json
 {
   "success": true,
   "data": [
     {
-      "_id": "queueDayObjectId",
-      "institution": "institutionObjectId",
-      "department": {
-        "_id": "departmentObjectId",
-        "name": "Account Services"
-      },
-      "date": "2026-02-25T00:00:00.000Z",
+      "_id": "queueDayId",
+      "department": { "_id": "departmentId", "name": "Outpatient" },
+      "date": "2026-02-26T00:00:00.000Z",
       "startTime": "09:00",
       "endTime": "17:00",
       "status": "active"
@@ -752,147 +395,79 @@ Gets (200):
 }
 ```
 
-Common errors:
-
-- `400`: institution missing
-
 #### `POST /queue-days/open`
-Auth: `admin`
 
-Takes (JSON body):
+- **Auth**: `admin`
+- **Body**:
 
 ```json
 {
-  "department": "departmentObjectId",
-  "date": "2026-02-25",
+  "department": "departmentId",
+  "date": "2026-02-26",
   "startTime": "09:00",
   "endTime": "17:00"
 }
 ```
 
-Validation/notes:
-
-- Required: `department`, `date`
-- Upserts queue day and sets `status` to `active`
-
-Gets (201):
-
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "queueDayObjectId",
-    "institution": "institutionObjectId",
-    "department": "departmentObjectId",
-    "date": "2026-02-25T00:00:00.000Z",
-    "startTime": "09:00",
-    "endTime": "17:00",
-    "status": "active"
-  }
-}
-```
-
-Common errors:
-
-- `400`: admin has no institution or missing required fields
+Opens (or upserts) a queue-day for that date and department as `active`.
 
 #### `PATCH /queue-days/:id/close`
-Auth: `admin`
 
-Takes: path param `id`
-
-Gets (200): updated queue-day object with `status: "closed"`.
-
-Common errors:
-
-- `404`: queue day not found
-- `403`: institution mismatch
+Set `status` to `closed`.
 
 #### `PATCH /queue-days/:id/pause`
-Auth: `admin`
 
-Takes: path param `id`
-
-Gets (200): updated queue-day object with `status: "paused"`.
-
-Common errors:
-
-- `404`: queue day not found
-- `403`: institution mismatch
-- `400`: queue day already closed
+Set `status` to `paused` (not allowed if already closed).
 
 #### `PATCH /queue-days/:id/resume`
-Auth: `admin`
 
-Takes: path param `id`
-
-Gets (200): updated queue-day object with `status: "active"`.
-
-Common errors:
-
-- `404`: queue day not found
-- `403`: institution mismatch
-- `400`: queue day already closed
+Set `status` back to `active` (not allowed if closed).
 
 #### `POST /queue-days/:id/reset`
-Auth: `admin`
 
-Takes: path param `id`
+Cancels all tokens in `waiting | called | serving` for that queue-day and clears displays.
 
-Behavior:
-
-- Cancels active in-flight tokens (`waiting`, `called`, `serving`) for that queue day.
-- Clears `Display.currentToken` for the department.
-
-Gets (200):
+Response:
 
 ```json
 {
   "success": true,
   "data": {
-    "queueDayId": "queueDayObjectId",
+    "queueDayId": "queueDayId",
     "cancelledCount": 3
   }
 }
 ```
 
-Common errors:
+---
 
-- `404`: queue day not found
-- `403`: institution mismatch
-
-### Tokens
+### 4.5 Tokens (`/tokens`)
 
 #### `POST /tokens/issue`
-Auth: Public (optionally authenticated customer)
 
-Takes (JSON body):
+- **Auth**: Public (customer) or authenticated
+- **Body**:
 
 ```json
 {
-  "institution": "institutionObjectId",
-  "department": "departmentObjectId",
-  "date": "2026-02-25"
+  "department": "departmentId",
+  "date": "2026-02-26"
 }
 ```
 
-Validation/notes:
+`department` required. `date` optional (defaults to today).
 
-- Required: `institution`, `department`
-- `date` optional; defaults to current day.
-- Queue day must exist and be `active` for that date.
+Queue-day for that department and date must be `active`.
 
-Gets (201):
+**Response 201**:
 
 ```json
 {
   "success": true,
   "data": {
-    "_id": "tokenObjectId",
-    "institution": "institutionObjectId",
-    "department": "departmentObjectId",
-    "queueDay": "queueDayObjectId",
-    "customer": "userObjectId_or_null",
+    "_id": "tokenId",
+    "department": "departmentId",
+    "queueDay": "queueDayId",
     "tokenNumber": "001",
     "status": "waiting",
     "issuedAt": "..."
@@ -900,23 +475,17 @@ Gets (201):
 }
 ```
 
-Common errors:
-
-- `400`: missing fields or queue not active
-
 #### `GET /tokens/:id/status`
-Auth: Public
 
-Takes: path param `id`
+Public token status for customers.
 
-Gets (200):
+Response:
 
 ```json
 {
   "success": true,
   "data": {
-    "tokenId": "tokenObjectId",
-    "institution": "institutionObjectId",
+    "tokenId": "tokenId",
     "tokenNumber": "001",
     "status": "waiting",
     "currentServing": {
@@ -930,142 +499,67 @@ Gets (200):
 }
 ```
 
-Common errors:
-
-- `404`: token not found
-
 #### `GET /tokens`
-Auth: `admin | staff`
 
-Takes (query params):
-
-- `department` (optional)
-- `queueDay` (optional)
-- `status` (optional: `waiting|called|serving|completed|missed|cancelled`)
-
-Gets (200):
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "_id": "tokenObjectId",
-      "tokenNumber": "001",
-      "status": "waiting",
-      "department": { "_id": "departmentObjectId", "name": "Account Services" },
-      "queueDay": { "_id": "queueDayObjectId", "date": "2026-02-25T00:00:00.000Z" },
-      "customer": { "_id": "userObjectId", "name": "Jane Doe" }
-    }
-  ]
-}
-```
+- **Auth**: `admin | staff`
+- **Query**:
+  - `department` (optional)
+  - `queueDay` (optional)
+  - `status` (optional: `waiting|called|serving|completed|missed|cancelled`)
 
 #### `POST /tokens/serve-next`
-Auth: `admin | staff`
 
-Takes (JSON body):
-
-```json
-{
-  "department": "departmentObjectId",
-  "counterId": "counterObjectId"
-}
-```
-
-Validation/notes:
-
-- Both fields required.
-- Uses current day and requires queue status `active`.
-- Finds earliest waiting token and marks it `called`.
-
-Gets (200):
+- **Auth**: `admin | staff`
+- **Body**:
 
 ```json
 {
-  "success": true,
-  "data": {
-    "_id": "tokenObjectId",
-    "tokenNumber": "001",
-    "status": "called",
-    "calledAt": "..."
-  }
+  "department": "departmentId",
+  "counterId": "counterId"
 }
 ```
 
-Common errors:
+Finds the earliest `waiting` token for today’s active queue-day and moves it to `called`.
 
-- `400`: missing fields / queue inactive
-- `404`: no waiting tokens
+#### Status-change endpoints
 
-#### `PATCH /tokens/:id/call`
-Auth: `admin | staff`
+All **Auth**: `admin | staff`:
 
-Takes:
+- `PATCH /tokens/:id/call`
+- `PATCH /tokens/:id/serve`
+- `PATCH /tokens/:id/complete`
+- `PATCH /tokens/:id/miss`
+- `PATCH /tokens/:id/cancel`
 
-- path param `id`
-- body (optional):
+Each accepts:
 
 ```json
-{
-  "counterId": "counterObjectId"
-}
+{ "counterId": "counterId" }
 ```
 
-Gets (200): token object with `status: "called"`.
+(`counterId` optional for `cancel`).
 
-#### `PATCH /tokens/:id/serve`
-Auth: `admin | staff`
+All return updated token in `{ success, data }`.
 
-Takes: same as above (`counterId` optional)
+---
 
-Gets (200): token object with `status: "serving"`.
-
-#### `PATCH /tokens/:id/complete`
-Auth: `admin | staff`
-
-Takes: same as above (`counterId` optional)
-
-Gets (200): token object with `status: "completed"`.
-
-#### `PATCH /tokens/:id/miss`
-Auth: `admin | staff`
-
-Takes: same as above (`counterId` optional)
-
-Gets (200): token object with `status: "missed"`.
-
-#### `PATCH /tokens/:id/cancel`
-Auth: `admin | staff`
-
-Takes: path param `id` (no body required)
-
-Gets (200): token object with `status: "cancelled"`.
-
-Common errors for status-change endpoints:
-
-- `404`: token not found
-- `403`: token institution mismatch (for authenticated users)
-
-### Display
+### 4.6 Display (`/display`)
 
 #### `GET /display`
-Auth: Public
 
-Takes (query params):
+Public display for a department (and optional counter).
 
-- `institution` (required)
-- `department` (required)
-- `counter` (optional)
+- **Query**:
+  - `department` (required)
+  - `counter` (optional)
 
-Gets (200):
+Response:
 
 ```json
 {
   "success": true,
   "data": {
-    "institution": "institutionObjectId",
-    "department": "departmentObjectId",
+    "department": "departmentId",
     "queueStatus": "active",
     "nowServing": {
       "tokenNumber": "003",
@@ -1081,60 +575,62 @@ Gets (200):
 }
 ```
 
-Common errors:
-
-- `400`: missing `institution` or `department`
-
 #### `GET /display/rows`
-Auth: `admin | staff`
 
-Takes (query params):
+- **Auth**: `admin | staff`
+- **Query**:
+  - `department` (optional)
+  - `counter` (optional)
 
-- `department` (optional)
-- `counter` (optional)
+Returns raw display rows with populated `department`, `counter`, and `currentToken`.
 
-Gets (200):
+---
 
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "_id": "displayRowObjectId",
-      "institution": "institutionObjectId",
-      "department": { "_id": "departmentObjectId", "name": "Account Services" },
-      "counter": { "_id": "counterObjectId", "counterName": "Counter 1" },
-      "currentToken": {
-        "_id": "tokenObjectId",
-        "tokenNumber": "003",
-        "department": { "_id": "departmentObjectId", "name": "Account Services" },
-        "queueDay": { "_id": "queueDayObjectId", "date": "2026-02-25T00:00:00.000Z" }
-      },
-      "updatedAt": "..."
-    }
-  ]
-}
-```
+### 4.7 Admin Dashboard (`/admin`)
 
-### Public Queue Info
+#### `GET /admin/dashboard`
 
-#### `GET /public/queue/:departmentId/info`
-Auth: Public
+- **Auth**: `admin`
+- **Query**:
+  - `department` (required)
+  - `date` (optional; defaults to today)
 
-Takes:
-
-- path param `departmentId`
-- query param `institution` (required)
-
-Gets (200):
+Response:
 
 ```json
 {
   "success": true,
   "data": {
-    "institutionId": "institutionObjectId",
-    "institutionName": "My Branch",
-    "queueName": "Account Services",
+    "department": "departmentId",
+    "queueStatus": "active",
+    "currentServingNumber": "003",
+    "totalWaitingTokens": 4,
+    "tokensToday": 19,
+    "averageWaitTimeMinutes": 8,
+    "totalCompletedToday": 12
+  }
+}
+```
+
+If no active/paused queue-day exists for that date, `queueStatus` is `"closed"` and counts are 0.
+
+---
+
+### 4.8 Public Queue Info (`/public`)
+
+#### `GET /public/queue/:departmentId/info`
+
+Public info for the “join” page.
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "institutionId": null,
+    "institutionName": null,
+    "queueName": "Outpatient",
     "queueStatus": "active",
     "startTime": "09:00",
     "endTime": "17:00"
@@ -1142,134 +638,108 @@ Gets (200):
 }
 ```
 
-Common errors:
+Notes:
 
-- `400`: missing institution
-- `404`: institution or department not found/inactive
+- `institutionId` and `institutionName` are always `null` now (kept only for compatibility with frontend types).
 
-### Users
+---
+
+### 4.9 Users (`/users`)
 
 #### `GET /users`
-Auth: `admin`
 
-Takes (query params):
+- **Auth**: `admin`
+- **Query**:
+  - `role` (optional: `admin|staff|customer`)
 
-- `role` (optional: `admin|staff|customer`)
-
-Gets (200):
+Response:
 
 ```json
 {
   "success": true,
   "data": [
     {
-      "_id": "userObjectId",
+      "_id": "userId",
       "name": "Jane Doe",
       "email": "jane@example.com",
       "phone": "9812345678",
       "role": "customer",
-      "institution": null,
-      "department": null,
-      "createdAt": "...",
-      "updatedAt": "..."
+      "department": null
     }
   ]
 }
 ```
 
-Notes:
-
-- If logged-in admin has institution, list is scoped to:
-  - users in same institution, OR
-  - customer users with `institution: null`.
-
 #### `PATCH /users/:userId/role`
-Auth: `admin`
 
-Takes:
-
-- path param `userId`
-- JSON body:
+- **Auth**: `admin`
+- **Body**:
 
 ```json
-{
-  "role": "staff"
-}
+{ "role": "staff" }
 ```
 
-Allowed roles: `staff | customer | admin`
+Allowed: `admin`, `staff`, `customer`.
 
-Gets (200):
+Response:
 
 ```json
 {
   "success": true,
   "data": {
-    "id": "userObjectId",
+    "id": "userId",
     "name": "Jane Doe",
     "email": "jane@example.com",
     "phone": "9812345678",
-    "role": "staff",
-    "institution": "institutionObjectId"
+    "role": "staff"
   }
 }
 ```
 
-Common errors:
+---
 
-- `400`: invalid role, or assigning `staff/admin` without admin institution
-- `404`: user not found
-
-### QR
+### 4.10 QR (`/qr`)
 
 #### `GET /qr`
-Auth: Public
 
-Takes (query params):
+- **Auth**: Public
+- **Query**:
+  - `institution` (still required by this endpoint)
+  - `department` (required)
 
-- `institution` (required)
-- `department` (required)
+Response:
 
-Gets:
+- `200` – `image/png` QR code
 
-- `200` with `Content-Type: image/png` (QR image)
-- Encodes this join URL pattern:
-  - `${CLIENT_URL}/join?institution=<id>&department=<id>`
+The QR encodes:
 
-Common errors:
+```text
+${CLIENT_URL}/join?institution=<institution>&department=<department>
+```
 
-- `400`: missing required query params
-- `500`: QR generation failed
+> Note: although the rest of the system no longer uses institutions, this endpoint still accepts an `institution` query parameter purely so existing QR codes and frontend logic keep working. It does **not** touch any Institution model.
 
 ---
 
-## Socket.IO Rooms and Events
+## 5. Socket.IO Events
 
-Client join/leave events:
+Socket setup is in `backend/server.js`.
 
-- `joinDepartment` with `{ institutionId, departmentId }`
-- `leaveDepartment` with `{ institutionId, departmentId }`
-- `joinToken` with `{ institutionId, tokenId }`
-- `leaveToken` with `{ institutionId, tokenId }`
+Client rooms:
 
-Server emits:
+- Department room: `dept:${departmentId}`
+- Token room: `token:${tokenId}`
 
-- `token:issued`
-- `token:updated`
-- `display:updated`
-- `dashboard:changed`
+Server emits (subset):
+
 - `queue:statusChanged`
 - `queue:reset`
+- `dashboard:changed`
+- `token:issued`
+- `token:updated`
 - `token:selfUpdated`
 - `token:turnArrived`
+- `display:updated`
 
----
-
-## Important Behavior Notes
-
-- Admin/staff flows depend on `req.user.institution` for most scoped routes.
-- If an admin has `institution: null`, institution-scoped endpoints fail.
-- Register always creates `customer` users.
-- CORS is configured with credentials enabled (`CLIENT_URL`).
-- `POST /departments` currently uses `institutionId` from request body rather than `req.user.institution`.
+These are used by the frontend dashboards and displays to update in real-time when queue state changes.
 

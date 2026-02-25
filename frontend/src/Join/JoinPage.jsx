@@ -22,9 +22,8 @@ const MOCK_DATA = {
 
 export const JoinPage = () => {
   const [searchParams] = useSearchParams();
-  const institution = searchParams.get("institution") || "";
   const department = searchParams.get("department") || "";
-  const canQuery = Boolean(institution && department);
+  const canQuery = Boolean(department);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
@@ -49,7 +48,7 @@ export const JoinPage = () => {
 
       try {
         const json = await apiRequest(
-          `/public/queue/${department}/info?institution=${institution}`
+          `/public/queue/${department}/info`
         );
         setQueueInfo(json.data);
       } catch (err) {
@@ -60,7 +59,7 @@ export const JoinPage = () => {
       }
     };
     fetchQueueInfo();
-  }, [canQuery, department, institution]);
+  }, [canQuery, department]);
 
   const handleJoin = async () => {
     if (!canQuery || isJoining || !queueOpen) return;
@@ -69,12 +68,11 @@ export const JoinPage = () => {
     try {
       const json = await apiRequest("/tokens/issue", {
         method: "POST",
-        body: { institution, department },
+        body: { department },
       });
       setToken(json.data);
       localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({
         tokenId: json.data._id,
-        institutionId: institution,
         departmentId: department,
         tokenNumber: json.data.tokenNumber,
       }));
@@ -115,7 +113,7 @@ export const JoinPage = () => {
         {/* Action Center */}
         <div className="flex justify-center mt-4">
           {token ? (
-            <TokenSuccessCard token={token} institution={institution} />
+            <TokenSuccessCard token={token} institution={null} />
           ) : (
             <CheckInCard
               onJoin={handleJoin}

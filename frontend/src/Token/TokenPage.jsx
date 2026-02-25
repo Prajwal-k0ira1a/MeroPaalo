@@ -30,8 +30,6 @@ export default function TokenPage() {
   }, []);
 
   const tokenId = searchParams.get("tokenId") || persistedToken?.tokenId || "";
-  const institutionId =
-    searchParams.get("institution") || persistedToken?.institutionId || "";
   const departmentId =
     searchParams.get("department") || persistedToken?.departmentId || "";
 
@@ -91,7 +89,7 @@ export default function TokenPage() {
     let cancelled = false;
 
     const fetchQueueInfo = async () => {
-      if (!institutionId || !departmentId) {
+      if (!departmentId) {
         setQueueInfo((prev) => ({
           institutionName: prev?.institutionName || "MeroPaalo Queue",
           queueName: prev?.queueName || "General Service",
@@ -102,7 +100,7 @@ export default function TokenPage() {
 
       try {
         const queueJson = await apiRequest(
-          `/public/queue/${departmentId}/info?institution=${institutionId}`
+          `/public/queue/${departmentId}/info`
         );
         if (!cancelled) {
           setQueueInfo(queueJson?.data || null);
@@ -123,7 +121,7 @@ export default function TokenPage() {
     return () => {
       cancelled = true;
     };
-  }, [institutionId, departmentId]);
+  }, [departmentId]);
 
   const handleCancel = async () => {
     if (!tokenId) return;

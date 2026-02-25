@@ -17,15 +17,15 @@ const getCookieOptions = () => {
 };
 
 export const register = async (req, res) => {
-  const { name, email, phone, password, institution, department } = req.body;
+  const { name, email, password } = req.body;
 
-  if (!name || !password || (!email && !phone)) {
+  if (!name || !email || !password) {
     res.status(400);
-    throw new Error("name, password, and (email or phone) are required");
+    throw new Error("name, email, and password are required");
   }
 
   const existing = await User.findOne({
-    $or: [{ email: email?.toLowerCase() }, { phone }],
+    email: email.toLowerCase(),
   });
 
   if (existing) {
@@ -38,11 +38,9 @@ export const register = async (req, res) => {
 // at registration, the role is always set to customer.
   const user = await User.create({
     name,
-    email: email?.toLowerCase(),
-    phone,
+    email: email.toLowerCase(),
     password: hashed,
     role: "customer",
-    institution: null,
     department: null,
   });
 
@@ -55,9 +53,7 @@ export const register = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        phone: user.phone,
         role: user.role,
-        institution: null,
         department: null,
       }
     },
@@ -65,16 +61,14 @@ export const register = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  const { email, phone, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!password || (!email && !phone)) {
+  if (!email || !password) {
     res.status(400);
-    throw new Error("password and (email or phone) are required");
+    throw new Error("email and password are required");
   }
 
-  const user = await User.findOne({
-    $or: [{ email: email?.toLowerCase() }, { phone }],
-  });
+  const user = await User.findOne({ email: email.toLowerCase() });
 
   if (!user) {
     res.status(401);
@@ -96,10 +90,8 @@ export const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        phone: user.phone,
-        role: user.role,
-        institution: user.institution,
-        department: user.department,
+      role: user.role,
+      department: user.department,
       }
     },
   });
