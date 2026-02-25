@@ -9,7 +9,10 @@ const counterSchema = new mongoose.Schema(
             index: true,
         },
 
-        counterName: { type: String, required: true },
+        counterName: {
+            type: String,
+            required: true
+        },
 
         department: {
             type: mongoose.Schema.Types.ObjectId,
@@ -18,9 +21,16 @@ const counterSchema = new mongoose.Schema(
             index: true,
         },
 
-        staff: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        staff: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        },
 
-        status: { type: String, enum: ["open", "closed"], default: "open" },
+        status: {
+            type: String,
+            enum: ["open", "closed"],
+            default: "open"
+        },
     },
     { timestamps: true }
 );

@@ -16,12 +16,23 @@ const queueDaySchema = new mongoose.Schema(
             index: true,
         },
 
-        date: { type: Date, required: true },
+        date: {
+            type: Date,
+            required: true
+        },
 
-        startTime: String,
-        endTime: String,
+        startTime: {
+            type: String
+        },
+        endTime: {
+            type: String
+        },
 
-        status: { type: String, enum: ["active", "paused", "closed"], default: "active" },
+        status: {
+            type: String,
+            enum: ["active", "paused", "closed"],
+            default: "active"
+        },
     },
     { timestamps: true }
 );

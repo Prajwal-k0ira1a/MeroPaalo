@@ -9,13 +9,24 @@ const departmentSchema = new mongoose.Schema(
             index: true,
         },
 
-        name: { type: String, required: true },
+        name: {
+            type: String,
+            required: true
+        },
 
-        description: String,
+        description: {
+            type: String
+        },
 
-        avgServiceTime: { type: Number, default: 5 },
+        avgServiceTime: {
+            type: Number,
+            default: 5
+        },
 
-        isActive: { type: Boolean, default: true },
+        isActive: {
+            type: Boolean,
+            default: true
+        },
     },
     { timestamps: true }
 );

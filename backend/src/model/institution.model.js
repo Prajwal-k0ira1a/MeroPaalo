@@ -2,8 +2,13 @@ import mongoose from "mongoose";
 
 const institutionSchema = new mongoose.Schema(
     {
-        name: { type: String, required: true },
-        address: { type: String },
+        name: {
+            type: String,
+            required: true
+        },
+        address: {
+            type: String
+        },
 
         phone: {
             type: String,
@@ -20,9 +25,17 @@ const institutionSchema = new mongoose.Schema(
             match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Please use a valid email address"],
         },
 
-        planType: { type: String, enum: ["basic", "pro"], default: "basic" },
+        planType: {
+            type: String,
+            enum: ["basic", "pro"],
+            default: "basic"
+        },
 
-        status: { type: String, enum: ["active", "inactive"], default: "active" },
+        status: {
+            type: String,
+            enum: ["active", "inactive"],
+            default: "active"
+        },
     },
     { timestamps: true }
 );

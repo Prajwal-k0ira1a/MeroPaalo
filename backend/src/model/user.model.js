@@ -7,15 +7,43 @@ const userSchema = new mongoose.Schema(
             ref: "Institution",
             default: null,
             index: true,
+            required: function () {
+                return this.role === "staff";
+            },
         },
 
-        name: { type: String, required: true, trim: true },
+        department: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Department",
+            required: function () {
+                return this.role === "staff";
+            },
+            index: true
+        },
 
-        email: { type: String, unique: true, sparse: true, lowercase: true },
+        name: {
+            type: String,
+            required: true,
+            trim: true
+        },
 
-        phone: { type: String, unique: true, sparse: true },
+        email: {
+            type: String,
+            unique: true,
+            sparse: true,
+            lowercase: true
+        },
 
-        password: { type: String, required: true },
+        phone: {
+            type: String,
+            unique: true,
+            sparse: true
+        },
+
+        password: {
+            type: String,
+            required: true
+        },
 
         role: {
             type: String,

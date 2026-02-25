@@ -23,9 +23,15 @@ const tokenSchema = new mongoose.Schema(
             index: true,
         },
 
-        customer: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        customer: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        },
 
-        tokenNumber: { type: String, required: true },
+        tokenNumber: {
+            type: String,
+            required: true
+        },
 
         status: {
             type: String,
@@ -34,10 +40,20 @@ const tokenSchema = new mongoose.Schema(
             index: true,
         },
 
-        issuedAt: { type: Date, default: Date.now },
-        calledAt: Date,
-        servingAt: Date,
-        completedAt: Date,
+        issuedAt: {
+            type: Date,
+            default: Date.now
+        },
+
+        calledAt: {
+            type: Date
+        },
+        servingAt: {
+            type: Date
+        },
+        completedAt: {
+            type: Date
+        },
     },
     { timestamps: true }
 );

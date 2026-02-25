@@ -19,7 +19,9 @@ const tokenHistorySchema = new mongoose.Schema(
             required: true
         },
 
-        note: String,
+        note: {
+            type: String
+        },
 
         changedAt: {
             type: Date,
