@@ -1,22 +1,15 @@
 import { useMemo, useState } from "react";
+import JoinHeader from "./components/JoinHeader";
+import JoinFooter from "./components/JoinFooter";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
-const CLIENT_BASE = import.meta.env.VITE_CLIENT_BASE_URL || window.location.origin;
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 export const QRGeneratorPage = () => {
   const [institution, setInstitution] = useState("");
   const [department, setDepartment] = useState("");
 
   const canGenerate = Boolean(institution.trim() && department.trim());
-
-  const joinLink = useMemo(() => {
-    if (!canGenerate) return "";
-    const params = new URLSearchParams({
-      institution: institution.trim(),
-      department: department.trim(),
-    });
-    return `${CLIENT_BASE}/join?${params.toString()}`;
-  }, [canGenerate, institution, department]);
 
   const qrImageUrl = useMemo(() => {
     if (!canGenerate) return "";
@@ -28,51 +21,144 @@ export const QRGeneratorPage = () => {
   }, [canGenerate, institution, department]);
 
   return (
-    <main className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-      <section className="w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sm:p-8">
-        <p className="text-xs font-semibold tracking-wide text-teal-700 uppercase">MeroPaalo</p>
-        <h1 className="text-2xl font-bold text-slate-900 mt-2">QR Generator</h1>
-        <p className="text-sm text-slate-600 mt-1">
-          Choose institution and department IDs, then generate QR for customer join flow.
-        </p>
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      <JoinHeader showNav={false} />
 
-        <div className="grid sm:grid-cols-2 gap-4 mt-6">
-          <label className="text-sm font-medium text-slate-700">
-            Institution ID
-            <input
-              type="text"
-              value={institution}
-              onChange={(e) => setInstitution(e.target.value)}
-              className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
-              placeholder="67dc... (ObjectId)"
-            />
-          </label>
-
-          <label className="text-sm font-medium text-slate-700">
-            Department ID
-            <input
-              type="text"
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
-              placeholder="67dd... (ObjectId)"
-            />
-          </label>
+      <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-6 md:py-12 flex flex-col gap-8">
+        {/* Page Header — Technical & Clear */}
+        <div className="space-y-4">
+          <div className="flex flex-col gap-2">
+            <p className="text-[10px] font-bold text-teal-600 uppercase tracking-[0.2em] leading-none mb-1 font-display">
+              Infrastructure Tools
+            </p>
+            <h1 className="text-3xl md:text-5xl font-bold text-slate-900 tracking-tight leading-none font-display">
+              Access Point <span className="text-slate-400">QR Generator</span>
+            </h1>
+          </div>
+          <p className="text-sm text-slate-500 font-medium max-w-2xl leading-relaxed">
+            Configure system parameters to generate secure access tokens. This
+            QR code allows customers to join the virtual queue flow instantly.
+          </p>
+          <div className="h-0.5 bg-slate-100/50 w-full rounded-full" />
         </div>
 
-        {canGenerate && (
-          <div className="mt-6 space-y-4">
-            <div className="rounded-xl border border-slate-200 p-3 bg-slate-50">
-              <p className="text-xs font-semibold text-slate-500">Join Link</p>
-              <p className="text-sm break-all text-slate-800">{joinLink}</p>
-            </div>
+        {/* Configuration Card */}
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100">
+          {/* Form Side */}
+          <div className="flex-1 p-6 md:p-8 space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest font-display">
+                Configuration Parameters
+              </h3>
 
-            <div className="rounded-xl border border-slate-200 p-4 flex justify-center bg-white">
-              <img src={qrImageUrl} alt="Queue QR code" className="w-64 h-64 object-contain" />
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Institution Identifier
+                  </label>
+                  <input
+                    type="text"
+                    value={institution}
+                    onChange={(e) => setInstitution(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono text-slate-700 outline-none focus:border-teal-500/50 focus:ring-4 focus:ring-teal-500/5 transition-all"
+                    placeholder="Enter Institution ID"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Department Reference
+                  </label>
+                  <input
+                    type="text"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono text-slate-700 outline-none focus:border-teal-500/50 focus:ring-4 focus:ring-teal-500/5 transition-all"
+                    placeholder="Enter Department ID"
+                  />
+                </div>
+              </div>
             </div>
           </div>
-        )}
-      </section>
-    </main>
+
+          {/* QR Side */}
+          <div className="w-full md:w-80 bg-slate-50/50 p-8 flex flex-col items-center justify-center text-center gap-6">
+            {!canGenerate ? (
+              <div className="flex flex-col items-center gap-4 text-slate-300">
+                <div className="w-48 h-48 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center">
+                  <svg
+                    className="w-12 h-12"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                </div>
+                <p className="text-xs font-bold uppercase tracking-widest">
+                  Waiting for Input
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center animate-in fade-in zoom-in duration-500">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <img
+                    src={qrImageUrl}
+                    alt="Access QR Code"
+                    className="w-48 h-48 object-contain"
+                  />
+                </div>
+                <p className="mt-6 text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] font-display">
+                  Access Point QR
+                </p>
+                <div className="mt-3 flex items-center gap-2 px-3 py-1 bg-teal-100/50 text-teal-600 border border-teal-200 rounded-full">
+                  <span className="w-1.5 h-1.5 bg-teal-500 rounded-full" />
+                  <span className="text-[9px] font-bold uppercase tracking-widest font-display">
+                    Ready to Scan
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Technical Guidance */}
+        <div className="p-6 bg-slate-100/50 border border-slate-200 rounded-2xl flex items-start gap-4">
+          <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center shrink-0 bg-white">
+            <svg
+              className="w-4 h-4 text-slate-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <div className="space-y-1">
+            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-tight">
+              Technical Implementation
+            </h4>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              This QR code maps directly to the virtual queue protocol. Print
+              and display this at service entrances to enable touchless check-in
+              for customers. Ensure Institution and Department IDs match the
+              backend database for correct routing.
+            </p>
+          </div>
+        </div>
+      </main>
+
+      <JoinFooter />
+    </div>
   );
 };
