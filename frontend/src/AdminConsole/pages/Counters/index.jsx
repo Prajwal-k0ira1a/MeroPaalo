@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { adminApi } from "../../api/adminApi";
 
 export default function CountersPage() {
@@ -102,15 +102,14 @@ export default function CountersPage() {
     }
   };
 
-  const filteredStaff = useMemo(
-    () =>
-      staffUsers.filter(
-        (u) =>
-          !u.department ||
-          String(u.department?._id || u.department) === String(selectedDepartmentId)
-      ),
-    [staffUsers, selectedDepartmentId]
-  );
+  const getAssignableUsers = (counter) => {
+    const counterDeptId = String(counter.department?._id || counter.department || "");
+    return staffUsers.filter((user) => {
+      if (user.role === "admin") return true;
+      if (user.role !== "staff") return false;
+      return String(user.department?._id || user.department || "") === counterDeptId;
+    });
+  };
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -180,6 +179,10 @@ export default function CountersPage() {
             )}
             {counters.map((counter) => (
               <tr key={counter._id} className="border-t border-gray-100 text-sm">
+                {(() => {
+                  const assignableUsers = getAssignableUsers(counter);
+                  return (
+                    <>
                 <td className="py-3 font-medium text-gray-800">{counter.counterName}</td>
                 <td className="py-3 text-gray-600">
                   {counter.department?.name || "Unassigned"}
@@ -199,10 +202,10 @@ export default function CountersPage() {
                   <select
                     value={counter.staff?._id || counter.staff || ""}
                     onChange={(e) => onAssignStaff(counter._id, e.target.value)}
-                    className="h-9 w-full rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-700 outline-none focus:border-teal-500"
+                    className="h-9 w-40 rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-700 outline-none focus:border-teal-500"
                   >
                     <option value="">Unassigned</option>
-                    {filteredStaff.map((staff) => (
+                    {assignableUsers.map((staff) => (
                       <option key={staff._id} value={staff._id}>
                         {staff.name} ({staff.role})
                       </option>
@@ -217,6 +220,9 @@ export default function CountersPage() {
                     Mark {counter.status === "open" ? "Closed" : "Open"}
                   </button>
                 </td>
+                    </>
+                  );
+                })()}
               </tr>
             ))}
           </tbody>

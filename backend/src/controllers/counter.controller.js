@@ -56,7 +56,7 @@ export const assignStaff = async (req, res) => {
   }
 
   if (staffId) {
-    const staff = await User.findById(staffId).select("role");
+    const staff = await User.findById(staffId).select("role department");
     if (!staff) {
       res.status(404);
       throw new Error("Staff user not found");
@@ -64,6 +64,18 @@ export const assignStaff = async (req, res) => {
     if (!["staff", "admin"].includes(staff.role)) {
       res.status(400);
       throw new Error("User is not staff/admin");
+    }
+
+    // Enforce department scope for staff users; admin can be assigned across departments.
+    if (staff.role === "staff") {
+      if (!staff.department) {
+        res.status(400);
+        throw new Error("Staff must be assigned to a department before counter assignment");
+      }
+      if (String(staff.department) !== String(counter.department)) {
+        res.status(400);
+        throw new Error("Staff department does not match counter department");
+      }
     }
   }
 

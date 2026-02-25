@@ -204,7 +204,7 @@ export default function UsersPage() {
                       onDepartmentChange(user._id, currentDepartmentId, e.target.value)
                     }
                     disabled={savingAll || effectiveRole !== "staff"}
-                    className="h-9 w-44 rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-700 outline-none focus:border-teal-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="h-9 w-40 rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-700 outline-none focus:border-teal-500 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <option value="">Unassigned</option>
                     {departments.map((department) => (

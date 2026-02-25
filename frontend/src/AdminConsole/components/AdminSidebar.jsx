@@ -4,6 +4,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import { useMemo } from "react";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -11,7 +12,29 @@ const navItems = [
   { id: "users", label: "Users", icon: Users },
 ];
 
+const AUTH_USER_STORAGE_KEY = "meropaalo_auth_user";
+
 export default function AdminSidebar({ activeNav, setActiveNav }) {
+  const authUser = useMemo(() => {
+    try {
+      const raw = localStorage.getItem(AUTH_USER_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const displayName = authUser?.name || authUser?.email || "Admin User";
+  const displayRole = authUser?.role
+    ? `${String(authUser.role).charAt(0).toUpperCase()}${String(authUser.role).slice(1)}`
+    : "Administrator";
+  const initials = displayName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("") || "AD";
+
   return (
     <aside className="w-56 bg-[#111827] text-white flex flex-col min-h-screen">
       {/* Logo */}
@@ -67,11 +90,11 @@ export default function AdminSidebar({ activeNav, setActiveNav }) {
       {/* User Info */}
       <div className="px-4 py-4 border-t border-white/10 flex items-center gap-3">
         <div className="w-9 h-9 rounded-full bg-gray-600 flex items-center justify-center text-xs font-bold">
-          AM
+          {initials}
         </div>
         <div>
-          <p className="text-sm font-medium">Alex Morgan</p>
-          <p className="text-xs text-gray-400">Branch Manager</p>
+          <p className="text-sm font-medium">{displayName}</p>
+          <p className="text-xs text-gray-400">{displayRole}</p>
         </div>
       </div>
     </aside>

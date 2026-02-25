@@ -7,6 +7,7 @@ import { LeftSidebar } from "./components/LeftSidebar";
 import { authService } from "./authService";
 
 const USER_TYPES = ["Staff", "Admin"];
+const AUTH_USER_STORAGE_KEY = "meropaalo_auth_user";
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ export const Login = () => {
     setIsLoading(true);
     try {
       const user = await authService.login(formData.email, formData.password);
+      localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
       // Redirect based on role returned by the server
       if (user.role === "admin") {
         navigate("/admin");
