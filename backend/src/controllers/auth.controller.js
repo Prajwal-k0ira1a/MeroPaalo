@@ -5,6 +5,15 @@ import User from "../model/user.model.js";
 const signToken = (id, role) =>
   jwt.sign({ _id: id, role }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "7d" });
 
+const getCookieOptions = () => {
+  const isProd = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "None" : "Lax",
+  };
+};
+
 export const register = async (req, res) => {
   const { name, email, phone, password, institution, department } = req.body;
 

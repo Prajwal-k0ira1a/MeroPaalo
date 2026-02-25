@@ -1,13 +1,14 @@
 import Department from "../model/department.model.js";
 
 export const createDepartment = async (req, res) => {
-  const institution = req.user.institution;
-  if (!institution) {
-    res.status(400);
-    throw new Error("Admin must belong to an institution");
-  }
-  const dept = await Department.create({ ...req.body, institution });
-  res.status(201).json({ success: true, data: dept });
+  const { name, institutionId } = req.body;
+
+  const department = await Department.create({
+    name,
+    institution: institutionId,
+  });
+
+  res.status(201).json(department);
 };
 
 export const getDepartments = async (req, res) => {
