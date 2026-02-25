@@ -15,7 +15,7 @@ export default function Sidebar({ activeNav, setActiveNav }) {
             onClick={() => setActiveNav(item.id)}
             className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium w-full text-left transition-colors duration-150
               ${activeNav === item.id
-                ? "bg-green-500 text-white font-bold"
+                ? "bg-teal-500 text-white font-bold"
                 : "text-gray-600 hover:bg-gray-100"
               }`}
           >
