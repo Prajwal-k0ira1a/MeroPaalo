@@ -4,6 +4,7 @@ import AdminTopbar from "./components/AdminTopbar";
 import DashboardPage from "./pages/Dashboard";
 import CountersPage from "./pages/Counters";
 import UsersPage from "./pages/Users";
+import DepartmentsPage from "./pages/Departments";
 
 export default function AdminConsolePage() {
   const [activeNav, setActiveNav] = useState("dashboard");
@@ -11,12 +12,15 @@ export default function AdminConsolePage() {
 
   const pages = {
     dashboard: <DashboardPage />,
+    departments: <DepartmentsPage />,
     counters: <CountersPage />,
     users: <UsersPage />,
   };
 
   const pageTitle =
-    activeNav === "counters"
+    activeNav === "departments"
+      ? "Departments"
+      : activeNav === "counters"
       ? "Counters"
       : activeNav === "users"
         ? "Users"

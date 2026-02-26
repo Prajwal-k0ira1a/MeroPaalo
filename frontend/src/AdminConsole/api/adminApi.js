@@ -19,6 +19,20 @@ const withQuery = (path, query = {}) => {
 export const adminApi = {
   getDepartments: () =>
     request(withQuery("/departments")),
+  createDepartment: (payload) =>
+    request("/departments", {
+      method: "POST",
+      body: { ...payload },
+    }),
+  updateDepartment: (departmentId, payload) =>
+    request(`/departments/${departmentId}`, {
+      method: "PATCH",
+      body: { ...payload },
+    }),
+  deleteDepartment: (departmentId) =>
+    request(`/departments/${departmentId}`, {
+      method: "DELETE",
+    }),
   getDashboard: (departmentId) =>
     request(withQuery("/admin/dashboard", { department: departmentId })),
   getTokens: (departmentId) =>

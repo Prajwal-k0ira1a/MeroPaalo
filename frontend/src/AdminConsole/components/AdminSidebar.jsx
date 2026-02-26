@@ -1,4 +1,5 @@
 import {
+  Building2,
   LayoutDashboard,
   Monitor,
   Users,
@@ -8,6 +9,7 @@ import { useMemo } from "react";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "departments", label: "Departments", icon: Building2 },
   { id: "counters", label: "Counters", icon: Monitor },
   { id: "users", label: "Users", icon: Users },
 ];
