@@ -7,6 +7,7 @@ export default function DashboardHeader({
   onIssueToken,
   onActivateQueue,
   onCloseQueue,
+  onResetQueue,
   onRefresh,
   queueStatus,
   loading,
@@ -58,6 +59,14 @@ export default function DashboardHeader({
           className="h-9 rounded-lg border border-red-600 px-3 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Close Queue
+        </button>
+
+        <button
+          onClick={onResetQueue}
+          disabled={loading || !selectedDepartmentId}
+          className="h-9 rounded-lg border border-amber-600 px-3 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Regenerate Queue
         </button>
 
         <button

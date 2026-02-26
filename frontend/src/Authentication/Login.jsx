@@ -34,8 +34,10 @@ export const Login = () => {
       // Redirect based on role returned by the server
       if (user.role === "admin") {
         navigate("/admin");
-      } else {
+      } else if (user.role === "staff") {
         navigate("/staff-admin");
+      }else{
+        navigate("/"); 
       }
     } catch (err) {
       setError(err.message || "Login failed. Please try again.");

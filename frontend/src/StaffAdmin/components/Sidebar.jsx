@@ -6,7 +6,13 @@ const navItems = [
   { id: "history", label: "Service History", icon: History },
 ];
 
-export default function Sidebar({ activeNav, setActiveNav, sidebarOpen }) {
+export default function Sidebar({
+  activeNav,
+  setActiveNav,
+  sidebarOpen,
+  hasError = false,
+  department,
+}) {
   return (
     <aside
       className={`fixed inset-y-0 left-0 z-40 w-64 shrink-0 transform border-r border-slate-200 bg-white p-4 transition-transform duration-200 lg:static lg:translate-x-0 ${
@@ -14,31 +20,45 @@ export default function Sidebar({ activeNav, setActiveNav, sidebarOpen }) {
       }`}
     >
       <div className="mt-16 flex h-full flex-col justify-between lg:mt-0">
-        <nav className="flex flex-col gap-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveNav(item.id)}
-                className={`flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-left text-sm font-medium transition-colors duration-150 ${
-                  activeNav === item.id
-                    ? "bg-teal-600 font-semibold text-white"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <Icon size={16} />
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
-
+        <div>
+          <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
+            <p className="text-xs font-semibold tracking-wide text-blue-700">
+              ASSIGNED DEPARTMENT
+            </p>
+            <p className="mt-1 font-semibold text-blue-900">
+              {department || "Not Assigned"}
+            </p>
+          </div>
+          <nav className="flex flex-col gap-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveNav(item.id)}
+                  className={`flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-left text-sm font-medium transition-colors duration-150 ${
+                    activeNav === item.id
+                      ? "bg-teal-600 font-semibold text-white"
+                      : "text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  <Icon size={16} />
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <p className="mb-2 text-xs font-semibold tracking-wide text-slate-500">SYSTEM STATUS</p>
+          <p className="mb-2 text-xs font-semibold tracking-wide text-slate-500">
+            SYSTEM STATUS
+          </p>
           <div className="flex items-center gap-2 text-sm text-slate-700">
-            <Activity size={14} className="text-emerald-600" />
-            Live Connection
+            <Activity
+              size={14}
+              className={hasError ? "text-amber-600" : "text-emerald-600"}
+            />
+            {hasError ? "Degraded Connection" : "Live Connection"}
           </div>
         </div>
       </div>

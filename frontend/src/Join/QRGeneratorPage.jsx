@@ -1,14 +1,40 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import JoinHeader from "./components/JoinHeader";
 import JoinFooter from "./components/JoinFooter";
+import { apiRequest } from "../lib/apiClient";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 export const QRGeneratorPage = () => {
   const [department, setDepartment] = useState("");
+  const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const json = await apiRequest("/departments");
+        setDepartments(json?.data || []);
+      } catch (err) {
+        setError("Failed to load departments");
+        setDepartments([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDepartments();
+  }, []);
 
   const canGenerate = Boolean(department.trim());
+
+  const selectedDepartmentName = useMemo(() => {
+    const dept = departments.find((d) => d._id === department);
+    return dept?.name || "";
+  }, [department, departments]);
 
   const qrImageUrl = useMemo(() => {
     if (!canGenerate) return "";
@@ -16,7 +42,7 @@ export const QRGeneratorPage = () => {
       department: department.trim(),
     });
     return `${API_BASE}/qr?${params.toString()}`;
-  }, [canGenerate, institution, department]);
+  }, [canGenerate, department]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -52,15 +78,34 @@ export const QRGeneratorPage = () => {
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Department Reference
+                    Select Department
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono text-slate-700 outline-none focus:border-teal-500/50 focus:ring-4 focus:ring-teal-500/5 transition-all"
-                    placeholder="Enter Department ID"
-                  />
+                    disabled={loading}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 outline-none focus:border-teal-500/50 focus:ring-4 focus:ring-teal-500/5 transition-all disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">
+                      {loading
+                        ? "Loading departments..."
+                        : "Choose a department"}
+                    </option>
+                    {error && <option disabled>{error}</option>}
+                    {departments.map((dept) => (
+                      <option key={dept._id} value={dept._id}>
+                        {dept.name}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedDepartmentName && (
+                    <p className="text-xs text-teal-600 font-semibold mt-2">
+                      Selected:{" "}
+                      <span className="text-teal-700">
+                        {selectedDepartmentName}
+                      </span>
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -131,13 +176,18 @@ export const QRGeneratorPage = () => {
           </div>
           <div className="space-y-1">
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-tight">
-              Technical Implementation
+              How It Works for Customers
             </h4>
             <p className="text-[11px] text-slate-500 leading-relaxed">
-              This QR code maps directly to the virtual queue protocol. Print
-              and display this at service entrances to enable touchless check-in
-              for customers. Ensure Institution and Department IDs match the
-              backend database for correct routing.
+              1. Customers scan the QR code with their phone
+              <br />
+              2. They enter their name and email to verify their identity
+              <br />
+              3. They join the queue and receive a token number
+              <br />
+              4. They can monitor their position in the queue in real-time
+              <br />
+              5. They will be notified when it's their turn to be served
             </p>
           </div>
         </div>

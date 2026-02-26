@@ -285,6 +285,32 @@ export default function DashboardPage() {
     }
   }, [dashboard.queueStatus, loadDepartmentData, selectedDepartmentId]);
 
+  const handleResetQueue = useCallback(async () => {
+    if (!selectedDepartmentId) return;
+    if (!window.confirm("Regenerate queue for today? This will cancel waiting/called/serving tokens.")) {
+      return;
+    }
+
+    setActionLoading(true);
+    setError("");
+    try {
+      const today = toLocalDateOnly();
+      const queueDays = await adminApi.getQueueDays(selectedDepartmentId);
+      const todayQueueDay = (queueDays || []).find((qd) => toApiDateOnly(qd?.date) === today);
+
+      if (!todayQueueDay?._id) {
+        throw new Error("No queue-day found for today.");
+      }
+
+      await adminApi.resetQueueDay(todayQueueDay._id);
+      await loadDepartmentData(selectedDepartmentId);
+    } catch (err) {
+      setError(err.message || "Failed to regenerate queue");
+    } finally {
+      setActionLoading(false);
+    }
+  }, [loadDepartmentData, selectedDepartmentId]);
+
   if (!loading && departments.length === 0) {
     return (
       <div className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-600">
@@ -302,6 +328,7 @@ export default function DashboardPage() {
         onIssueToken={handleIssueToken}
         onActivateQueue={handleActivateQueue}
         onCloseQueue={handleCloseQueue}
+        onResetQueue={handleResetQueue}
         onRefresh={handleRefresh}
         queueStatus={dashboard.queueStatus}
         loading={loading || actionLoading}

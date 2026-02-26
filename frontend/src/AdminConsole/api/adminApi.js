@@ -81,6 +81,10 @@ export const adminApi = {
     request(`/queue-days/${queueDayId}/close`, {
       method: "PATCH",
     }),
+  resetQueueDay: (queueDayId) =>
+    request(`/queue-days/${queueDayId}/reset`, {
+      method: "POST",
+    }),
   serveNext: (departmentId, counterId, _unusedInstitutionId) =>
     request("/tokens/serve-next", {
       method: "POST",
