@@ -1,69 +1,41 @@
-import { apiRequest } from "../../lib/apiClient";
-
-const request = async (path, options = {}) => {
-  const json = await apiRequest(path, options);
-  return json?.data;
-};
-
-const withQuery = (path, query = {}) => {
-  const params = new URLSearchParams();
-  Object.entries(query).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      params.set(key, value);
-    }
-  });
-  const qs = params.toString();
-  return qs ? `${path}?${qs}` : path;
-};
+import apiClient from "../../api/apiClient";
 
 export const staffApi = {
   getCounters: (departmentId) =>
-    request(withQuery("/counters", { department: departmentId })),
+    apiClient.get("/counters", { params: { department: departmentId } }),
+
   getTokens: (departmentId, status) =>
-    request(withQuery("/tokens", { department: departmentId, status })),
+    apiClient.get("/tokens", { params: { department: departmentId, status } }),
+
   serveNext: (departmentId, counterId) =>
-    request("/tokens/serve-next", {
-      method: "POST",
-      body: { department: departmentId, counterId },
-    }),
+    apiClient.post("/tokens/serve-next", { department: departmentId, counterId }),
+
   callToken: (tokenId, counterId) =>
-    request(`/tokens/${tokenId}/call`, {
-      method: "PATCH",
-      body: { counterId },
-    }),
+    apiClient.patch(`/tokens/${tokenId}/call`, { counterId }),
+
   serveToken: (tokenId, counterId) =>
-    request(`/tokens/${tokenId}/serve`, {
-      method: "PATCH",
-      body: { counterId },
-    }),
+    apiClient.patch(`/tokens/${tokenId}/serve`, { counterId }),
+
   completeToken: (tokenId, counterId) =>
-    request(`/tokens/${tokenId}/complete`, {
-      method: "PATCH",
-      body: { counterId },
-    }),
+    apiClient.patch(`/tokens/${tokenId}/complete`, { counterId }),
+
   getQueueDays: (departmentId) =>
-    request(withQuery("/queue-days", { department: departmentId })),
+    apiClient.get("/queue-days", { params: { department: departmentId } }),
+
   openQueueDay: (departmentId, date, startTime = "09:00", endTime = "17:00") =>
-    request("/queue-days/open", {
-      method: "POST",
-      body: {
-        department: departmentId,
-        date,
-        startTime,
-        endTime,
-      },
+    apiClient.post("/queue-days/open", {
+      department: departmentId,
+      date,
+      startTime,
+      endTime,
     }),
+
   closeQueueDay: (queueDayId) =>
-    request(`/queue-days/${queueDayId}/close`, {
-      method: "PATCH",
-    }),
+    apiClient.patch(`/queue-days/${queueDayId}/close`),
+
   resetQueueDay: (queueDayId) =>
-    request(`/queue-days/${queueDayId}/reset`, {
-      method: "POST",
-    }),
+    apiClient.post(`/queue-days/${queueDayId}/reset`),
+
   issueToken: (departmentId) =>
-    request("/tokens/issue", {
-      method: "POST",
-      body: { department: departmentId },
-    }),
+    apiClient.post("/tokens/issue", { department: departmentId }),
 };

@@ -2,10 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import JoinHeader from "./components/JoinHeader";
 import JoinFooter from "./components/JoinFooter";
-import { apiRequest } from "../lib/apiClient";
-
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+import apiClient from "../api/apiClient";
 
 export const QRGeneratorPage = () => {
   const [department, setDepartment] = useState("");
@@ -18,8 +15,8 @@ export const QRGeneratorPage = () => {
       setLoading(true);
       setError("");
       try {
-        const json = await apiRequest("/public/departments");
-        setDepartments(json?.data || []);
+        const data = await apiClient.get("/public/departments");
+        setDepartments(data?.data || []);
       } catch (err) {
         const errorMsg = "Failed to load departments";
         setError(errorMsg);
@@ -44,7 +41,7 @@ export const QRGeneratorPage = () => {
     const params = new URLSearchParams({
       department: department.trim(),
     });
-    return `${API_BASE}/qr?${params.toString()}`;
+    return `${apiClient.defaults.baseURL}/qr?${params.toString()}`;
   }, [canGenerate, department]);
 
   return (

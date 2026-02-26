@@ -8,7 +8,7 @@ import TokenMainInfo from "./components/TokenMainInfo";
 import TokenActions from "./components/TokenActions";
 import JoinFooter from "../Join/components/JoinFooter";
 import ErrorBanner from "../Join/components/ErrorBanner";
-import { apiRequest } from "../lib/apiClient";
+import apiClient from "../api/apiClient";
 
 const TOKEN_STORAGE_KEY = "meropaalo_customer_token";
 
@@ -56,10 +56,8 @@ export default function TokenPage() {
       }
 
       try {
-        const statusJson = await apiRequest(`/tokens/${tokenId}/status`);
+        const statusData = await apiClient.get(`/tokens/${tokenId}/status`);
         if (cancelled) return;
-
-        const statusData = statusJson?.data || {};
         setTokenData({
           _id: statusData.tokenId,
           tokenNumber: statusData.tokenNumber,
@@ -106,11 +104,11 @@ export default function TokenPage() {
       }
 
       try {
-        const queueJson = await apiRequest(
+        const queueData = await apiClient.get(
           `/public/queue/${departmentId}/info`,
         );
         if (!cancelled) {
-          setQueueInfo(queueJson?.data || null);
+          setQueueInfo(queueData || null);
         }
       } catch {
         if (!cancelled) {
@@ -139,7 +137,7 @@ export default function TokenPage() {
 
     const loadingToast = toast.loading("Canceling token...");
     try {
-      await apiRequest(`/tokens/${tokenId}/cancel`, { method: "PATCH" });
+      await apiClient.patch(`/tokens/${tokenId}/cancel`);
       setError("");
       toast.dismiss(loadingToast);
       toast.success("Token cancelled successfully!");
