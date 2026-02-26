@@ -30,11 +30,16 @@ export default function JoinHeader({ showTimer = false, showNav = true }) {
     <header className="w-full bg-white border-b border-slate-100 sticky top-0 z-50 transition-all duration-300">
       <div className="max-w-4xl mx-auto px-6 h-16 md:h-20 flex items-center justify-between">
         {/* Brand — Restored to Original MeroPaalo Style */}
-        <Link to="/" className="flex items-center gap-2.5 group select-none">
-          <span className="w-8 h-8 rounded-lg bg-linear-to-br from-teal-500 to-blue-600 flex items-center justify-center text-white font-bold text-base shadow-md shadow-teal-500/30 group-hover:shadow-teal-500/50 transition-all duration-300 group-hover:scale-105">
-            M
-          </span>
-          <span className="font-display font-bold text-slate-900 text-lg tracking-tight">
+        <Link
+          to="/"
+          className="flex items-center gap-2 group select-none hover:opacity-80 transition-opacity"
+        >
+          <img
+            src="/assets/MeroPaaloLogo.png"
+            alt="MeroPaalo"
+            className="w-8 h-8 object-contain"
+          />
+          <span className="font-display font-bold text-slate-900 text-lg tracking-tight hidden sm:inline">
             Mero
             <span className="text-teal-600 transition-colors group-hover:text-teal-500">
               Paalo

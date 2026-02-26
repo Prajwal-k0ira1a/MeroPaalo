@@ -22,18 +22,24 @@ const Footer = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 rounded flex items-center justify-center bg-teal-600 text-white font-bold">
-                M
-              </div>
-              <span className="font-bold text-xl tracking-tight text-slate-900">MeroPaalo</span>
+            <div className="flex items-center gap-3 mb-6">
+              <img
+                src="/assets/MeroPaaloLogo.png"
+                alt="MeroPaalo"
+                className="w-9 h-9 object-contain flex-shrink-0"
+              />
+              <span className="font-bold text-xl tracking-tight text-slate-900\">
+                MeroPaalo
+              </span>
             </div>
             <p className="text-slate-500 text-sm leading-relaxed mb-8 max-w-xs">
-              Intelligent queuing solutions for modern institutions in Nepal. Helping you deliver premium service with zero friction.
+              Intelligent queuing solutions for modern institutions in Nepal.
+              Helping you deliver premium service with zero friction.
             </p>
             <div className="space-y-4">
               <div className="flex items-center gap-3 text-slate-500 text-sm">
-                <Mail size={16} className="text-teal-600" /> contact@meropaalo.com
+                <Mail size={16} className="text-teal-600" />{" "}
+                contact@meropaalo.com
               </div>
               <div className="flex items-center gap-3 text-slate-500 text-sm">
                 <MapPin size={16} className="text-teal-600" /> Dharan, Nepal
@@ -53,7 +59,10 @@ const Footer = () => {
               <ul className="space-y-4">
                 {col.links.map((link, j) => (
                   <li key={j}>
-                    <a href="#" className="text-slate-500 text-sm hover:text-teal-600 transition-colors">
+                    <a
+                      href="#"
+                      className="text-slate-500 text-sm hover:text-teal-600 transition-colors"
+                    >
                       {link}
                     </a>
                   </li>
@@ -66,7 +75,8 @@ const Footer = () => {
         {/* Bottom bar */}
         <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-slate-400 text-xs font-medium">
-            © {new Date().getFullYear()} MeroPaalo Technologies. All rights reserved.
+            © {new Date().getFullYear()} MeroPaalo Technologies. All rights
+            reserved.
           </p>
           <div className="flex items-center gap-4">
             {[

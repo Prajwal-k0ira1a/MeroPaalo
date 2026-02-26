@@ -84,10 +84,12 @@ export const SignUp = () => {
       {/* Right form section */}
       <main className="flex-1 flex flex-col items-center justify-center bg-gray-50 px-6 py-4 overflow-y-auto">
         {/* Mobile-only logo */}
-        <div className="flex lg:hidden items-center gap-2 mb-4">
-          <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow">
-            M
-          </div>
+        <div className="flex lg:hidden items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
+          <img
+            src="/assets/MeroPaaloLogo.png"
+            alt="MeroPaalo"
+            className="w-8 h-8 object-contain"
+          />
           <span className="font-bold text-slate-900 text-lg">MeroPaalo</span>
         </div>
 

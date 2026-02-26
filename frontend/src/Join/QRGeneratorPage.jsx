@@ -3,6 +3,7 @@ import JoinHeader from "./components/JoinHeader";
 import JoinFooter from "./components/JoinFooter";
 import { apiRequest } from "../lib/apiClient";
 
+
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
@@ -17,7 +18,7 @@ export const QRGeneratorPage = () => {
       setLoading(true);
       setError("");
       try {
-        const json = await apiRequest("/departments");
+        const json = await apiRequest("/public/departments");
         setDepartments(json?.data || []);
       } catch (err) {
         setError("Failed to load departments");

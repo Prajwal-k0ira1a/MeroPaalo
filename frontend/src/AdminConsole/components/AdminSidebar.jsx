@@ -1,10 +1,4 @@
-import {
-  Building2,
-  LayoutDashboard,
-  Monitor,
-  Users,
-  Zap,
-} from "lucide-react";
+import { Building2, LayoutDashboard, Monitor, Users, Zap } from "lucide-react";
 import { useMemo } from "react";
 
 const navItems = [
@@ -30,21 +24,24 @@ export default function AdminSidebar({ activeNav, setActiveNav }) {
   const displayRole = authUser?.role
     ? `${String(authUser.role).charAt(0).toUpperCase()}${String(authUser.role).slice(1)}`
     : "Administrator";
-  const initials = displayName
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join("") || "AD";
+  const initials =
+    displayName
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("") || "AD";
 
   return (
     <aside className="w-56 bg-[#111827] text-white flex flex-col min-h-screen">
       {/* Logo */}
-      <div className="px-5 py-5 flex items-center gap-3">
-        <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
-          <div className="w-4 h-4 border-2 border-white rounded-full" />
-        </div>
-        <div>
+      <div className="px-5 py-5 flex items-center gap-3 border-b border-gray-700">
+        <img
+          src="/assets/MeroPaaloLogo.png"
+          alt="MeroPaalo"
+          className="w-8 h-8 object-contain flex-shrink-0"
+        />
+        <div className="min-w-0">
           <p className="text-sm font-bold leading-tight">MeroPaalo</p>
           <p className="text-[11px] text-gray-400">Admin Console</p>
         </div>

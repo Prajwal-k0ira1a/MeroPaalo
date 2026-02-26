@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -12,9 +13,9 @@ export default function Navbar() {
   }, []);
 
   const links = [
-    { label: "Features",     href: "#features"    },
+    { label: "Features", href: "#features" },
     { label: "How It Works", href: "#how-it-works" },
-    { label: "Pricing",      href: "#pricing"      },
+    { label: "Pricing", href: "#pricing" },
   ];
 
   return (
@@ -27,11 +28,16 @@ export default function Navbar() {
     >
       <nav className="max-w-[1200px] mx-auto px-6 flex items-center justify-between h-16">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-2.5 group select-none">
-          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center text-white font-bold text-base shadow-md shadow-teal-500/30 group-hover:shadow-teal-500/50 transition-shadow">
-            M
-          </span>
-          <span className="font-display font-bold text-slate-900 text-lg tracking-tight">
+        <a
+          href="#"
+          className="flex items-center gap-2 group select-none hover:opacity-80 transition-opacity"
+        >
+          <img
+            src="/assets/MeroPaaloLogo.png"
+            alt="MeroPaalo"
+            className="w-8 h-8 object-contain"
+          />
+          <span className="font-display font-bold text-slate-900 text-lg tracking-tight hidden sm:inline">
             Mero<span className="text-teal-600">Paalo</span>
           </span>
         </a>
@@ -56,7 +62,7 @@ export default function Navbar() {
             className="px-4 py-2 text-sm font-semibold text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
           >
             Log in
-          </Link >
+          </Link>
           <a
             href="#"
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-all shadow-md shadow-teal-500/25 hover:shadow-teal-500/40 hover:-translate-y-px"
@@ -89,10 +95,16 @@ export default function Navbar() {
             </a>
           ))}
           <div className="pt-3 border-t border-slate-100 flex flex-col gap-3">
-            <a href="#" className="w-full py-2.5 text-center text-sm font-semibold text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+            <a
+              href="#"
+              className="w-full py-2.5 text-center text-sm font-semibold text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+            >
               Log in
             </a>
-            <a href="#" className="w-full py-2.5 text-center text-sm font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors shadow-md shadow-teal-500/25">
+            <a
+              href="#"
+              className="w-full py-2.5 text-center text-sm font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors shadow-md shadow-teal-500/25"
+            >
               Request Demo
             </a>
           </div>

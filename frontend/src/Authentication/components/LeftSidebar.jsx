@@ -21,9 +21,11 @@ export const LeftSidebar = () => {
       <div className="relative z-10">
         {/* Logo */}
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 bg-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/30">
-            <span className="text-white font-bold text-lg">M</span>
-          </div>
+          <img
+            src="/assets/MeroPaaloLogo.png"
+            alt="MeroPaalo"
+            className="w-10 h-10 object-contain"
+          />
           <span className="text-xl font-bold tracking-tight">MeroPaalo</span>
         </div>
 

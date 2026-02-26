@@ -34,13 +34,11 @@ export default function Topbar({ onMenuClick, user, department }) {
         >
           <Menu size={18} />
         </button>
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600">
-          <div className="grid grid-cols-2 gap-0.5">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-2 w-2 rounded-sm bg-white" />
-            ))}
-          </div>
-        </div>
+        <img
+          src="/assets/MeroPaaloLogo.png"
+          alt="MeroPaalo"
+          className="w-8 h-8 object-contain"
+        />
         <span className="text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl">
           MeroPaalo
         </span>
