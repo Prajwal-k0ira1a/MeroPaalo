@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import JoinHeader from "./components/JoinHeader";
 import JoinFooter from "./components/JoinFooter";
 import { apiRequest } from "../lib/apiClient";
-
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
@@ -21,7 +21,9 @@ export const QRGeneratorPage = () => {
         const json = await apiRequest("/public/departments");
         setDepartments(json?.data || []);
       } catch (err) {
-        setError("Failed to load departments");
+        const errorMsg = "Failed to load departments";
+        setError(errorMsg);
+        toast.error(errorMsg);
         setDepartments([]);
       } finally {
         setLoading(false);

@@ -9,6 +9,7 @@ import { CustomerLogin } from "./Join/CustomerLogin";
 import { QRGeneratorPage } from "./Join/QRGeneratorPage";
 import TokenPage from "./Token/TokenPage";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 const AUTH_USER_STORAGE_KEY = "meropaalo_auth_user";
 
@@ -29,7 +30,40 @@ function RequireRole({ allowedRoles, children }) {
 
 function App() {
   return (
-    <Routes>
+    <>
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        gutter={8}
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: "#363636",
+            color: "#fff",
+          },
+          success: {
+            duration: 3000,
+            style: {
+              background: "#10b981",
+            },
+            iconTheme: {
+              primary: "#fff",
+              secondary: "#10b981",
+            },
+          },
+          error: {
+            duration: 4000,
+            style: {
+              background: "#ef4444",
+            },
+            iconTheme: {
+              primary: "#fff",
+              secondary: "#ef4444",
+            },
+          },
+        }}
+      />
+      <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/join" element={<JoinPage />} />
       <Route path="/customer-login" element={<CustomerLogin />} />
@@ -56,7 +90,7 @@ function App() {
       <Route path="/signup" element={<SignUp />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
     </Routes>
-  );
+    </>)
 }
 
 export default App;

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminApi } from "../../api/adminApi";
+import toast from "react-hot-toast";
 
 const DEFAULT_FORM = {
   name: "",
@@ -23,7 +24,9 @@ export default function DepartmentsPage() {
       const list = await adminApi.getDepartments();
       setDepartments(list || []);
     } catch (err) {
-      setError(err.message || "Failed to load departments");
+      const errorMsg = err.message || "Failed to load departments";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -44,6 +47,7 @@ export default function DepartmentsPage() {
     if (!canSave || saving) return;
     setSaving(true);
     setError("");
+    const loadingToast = toast.loading("Saving department...");
     try {
       const payload = {
         name: form.name.trim(),
@@ -53,13 +57,20 @@ export default function DepartmentsPage() {
       };
       if (editingDepartmentId) {
         await adminApi.updateDepartment(editingDepartmentId, payload);
+        toast.dismiss(loadingToast);
+        toast.success("Department updated successfully!");
       } else {
         await adminApi.createDepartment(payload);
+        toast.dismiss(loadingToast);
+        toast.success("Department created successfully!");
       }
       resetForm();
       await loadDepartments();
     } catch (err) {
-      setError(err.message || "Failed to save department");
+      const errorMsg = err.message || "Failed to save department";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -78,21 +89,29 @@ export default function DepartmentsPage() {
   const onDelete = async (departmentId) => {
     if (!window.confirm("Delete this department?")) return;
     setError("");
+    const loadingToast = toast.loading("Deleting department...");
     try {
       await adminApi.deleteDepartment(departmentId);
       if (editingDepartmentId === departmentId) {
         resetForm();
       }
+      toast.dismiss(loadingToast);
+      toast.success("Department deleted successfully!");
       await loadDepartments();
     } catch (err) {
-      setError(err.message || "Failed to delete department");
+      const errorMsg = err.message || "Failed to delete department";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     }
   };
 
   return (
     <div className="flex h-full flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Department Management</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Department Management
+        </h1>
         <p className="mt-1 text-sm text-gray-500">
           Create, edit, activate, and delete departments.
         </p>
@@ -102,13 +121,17 @@ export default function DepartmentsPage() {
         <div className="grid gap-3 md:grid-cols-5">
           <input
             value={form.name}
-            onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, name: e.target.value }))
+            }
             placeholder="Department name"
             className="h-10 rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-teal-500 md:col-span-2"
           />
           <input
             value={form.description}
-            onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, description: e.target.value }))
+            }
             placeholder="Description (optional)"
             className="h-10 rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-teal-500 md:col-span-2"
           />
@@ -116,7 +139,9 @@ export default function DepartmentsPage() {
             type="number"
             min={1}
             value={form.avgServiceTime}
-            onChange={(e) => setForm((prev) => ({ ...prev, avgServiceTime: e.target.value }))}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, avgServiceTime: e.target.value }))
+            }
             placeholder="Avg service (min)"
             className="h-10 rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-teal-500"
           />
@@ -127,7 +152,9 @@ export default function DepartmentsPage() {
             <input
               type="checkbox"
               checked={form.isActive}
-              onChange={(e) => setForm((prev) => ({ ...prev, isActive: e.target.checked }))}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, isActive: e.target.checked }))
+              }
               className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
             />
             Active
@@ -137,7 +164,11 @@ export default function DepartmentsPage() {
             disabled={!canSave || saving}
             className="h-10 rounded-lg bg-teal-600 px-4 text-sm font-semibold text-white hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {saving ? "Saving..." : editingDepartmentId ? "Update Department" : "Add Department"}
+            {saving
+              ? "Saving..."
+              : editingDepartmentId
+                ? "Update Department"
+                : "Add Department"}
           </button>
           {editingDepartmentId && (
             <button
@@ -177,9 +208,16 @@ export default function DepartmentsPage() {
               </tr>
             )}
             {departments.map((department) => (
-              <tr key={department._id} className="border-t border-gray-100 text-sm">
-                <td className="py-3 font-medium text-gray-800">{department.name}</td>
-                <td className="py-3 text-gray-600">{department.description || "-"}</td>
+              <tr
+                key={department._id}
+                className="border-t border-gray-100 text-sm"
+              >
+                <td className="py-3 font-medium text-gray-800">
+                  {department.name}
+                </td>
+                <td className="py-3 text-gray-600">
+                  {department.description || "-"}
+                </td>
                 <td className="py-3 text-gray-600">
                   {department.avgServiceTime || "-"} min
                 </td>

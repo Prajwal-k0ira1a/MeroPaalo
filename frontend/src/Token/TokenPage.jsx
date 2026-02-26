@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import JoinHeader from "../Join/components/JoinHeader";
 import TokenProgress from "./components/TokenProgress";
@@ -13,7 +14,8 @@ const TOKEN_STORAGE_KEY = "meropaalo_customer_token";
 
 const toProgressStatus = (backendStatus) => {
   if (backendStatus === "called") return "next";
-  if (backendStatus === "serving" || backendStatus === "completed") return "serving";
+  if (backendStatus === "serving" || backendStatus === "completed")
+    return "serving";
   return "queue";
 };
 
@@ -44,7 +46,10 @@ export default function TokenPage() {
     const fetchTokenStatus = async () => {
       if (!tokenId) {
         if (!cancelled) {
-          setError("Missing tokenId. Please re-open from the issued token link.");
+          const errorMsg =
+            "Missing tokenId. Please re-open from the issued token link.";
+          setError(errorMsg);
+          toast.error(errorMsg);
           setIsLoading(false);
         }
         return;
@@ -67,7 +72,9 @@ export default function TokenPage() {
         setError("");
       } catch (err) {
         if (!cancelled) {
-          setError(err.message || "Failed to fetch token status.");
+          const errorMsg = err.message || "Failed to fetch token status.";
+          setError(errorMsg);
+          toast.error(errorMsg);
         }
       } finally {
         if (!cancelled) {
@@ -100,7 +107,7 @@ export default function TokenPage() {
 
       try {
         const queueJson = await apiRequest(
-          `/public/queue/${departmentId}/info`
+          `/public/queue/${departmentId}/info`,
         );
         if (!cancelled) {
           setQueueInfo(queueJson?.data || null);
@@ -125,16 +132,24 @@ export default function TokenPage() {
 
   const handleCancel = async () => {
     if (!tokenId) return;
-    if (!window.confirm("Are you sure you want to cancel your spot in the queue?")) return;
+    if (
+      !window.confirm("Are you sure you want to cancel your spot in the queue?")
+    )
+      return;
 
+    const loadingToast = toast.loading("Canceling token...");
     try {
       await apiRequest(`/tokens/${tokenId}/cancel`, { method: "PATCH" });
       setError("");
+      toast.dismiss(loadingToast);
+      toast.success("Token cancelled successfully!");
     } catch (err) {
-      setError(
+      const errorMsg =
         err.message ||
-          "This token cannot be cancelled from customer view. Please contact staff."
-      );
+        "This token cannot be cancelled from customer view. Please contact staff.";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     }
   };
 

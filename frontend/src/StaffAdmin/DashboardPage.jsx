@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import Topbar from "./components/Topbar";
 import Sidebar from "./components/Sidebar";
 import DashboardPage from "./pages/Dashboard";
@@ -74,7 +75,9 @@ export default function MeroPaaloStaffApp() {
       setCounters(counterList || []);
       setTokens(tokenList || []);
     } catch (err) {
-      setError(err.message || "Failed to load staff panel");
+      const errorMsg = err.message || "Failed to load staff panel";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -191,11 +194,17 @@ export default function MeroPaaloStaffApp() {
     if (actionLoading) return;
     setActionLoading(true);
     setError("");
+    const loadingToast = toast.loading("Processing...");
     try {
       await fn();
+      toast.dismiss(loadingToast);
+      toast.success("Operation completed successfully!");
       await loadData();
     } catch (err) {
-      setError(err.message || defaultError);
+      const errorMsg = err.message || defaultError;
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     } finally {
       setActionLoading(false);
     }

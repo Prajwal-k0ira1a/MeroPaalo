@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import JoinHeader from "./components/JoinHeader";
 import JoinFooter from "./components/JoinFooter";
 
@@ -18,17 +19,22 @@ export const CustomerLogin = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!name.trim() || !email.trim()) {
-      setError("Please enter both name and email.");
+      const errorMsg = "Please enter both name and email.";
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email address.");
+      const errorMsg = "Please enter a valid email address.";
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
 
     setIsLoading(true);
     setError("");
+    const loadingToast = toast.loading("Verifying information...");
 
     try {
       // Store customer info
@@ -41,10 +47,15 @@ export const CustomerLogin = () => {
         }),
       );
 
+      toast.dismiss(loadingToast);
+      toast.success(`Welcome, ${name.trim()}!`);
       // Redirect to join page
       navigate(`/join?department=${department}`);
     } catch (err) {
-      setError(err.message || "Login failed. Please try again.");
+      const errorMsg = err.message || "Login failed. Please try again.";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import { Button } from "./components/Button";
 import { Input } from "./components/Input";
 import { LeftSidebar } from "./components/LeftSidebar";
@@ -55,22 +56,32 @@ export const SignUp = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!agreed) return;
+    if (!agreed) {
+      toast.error("Please agree to terms and conditions");
+      return;
+    }
     if (!passwordsMatch) {
       setError("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
     setError("");
     setIsLoading(true);
+    const loadingToast = toast.loading("Creating account...");
     try {
       await authService.register(
         formData.fullName,
         formData.email,
         formData.password,
       );
-      navigate("/login");
+      toast.dismiss(loadingToast);
+      toast.success("Account created successfully! Redirecting to login...");
+      setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
-      setError(err.message || "Registration failed. Please try again.");
+      const errorMsg = err.message || "Registration failed. Please try again.";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }

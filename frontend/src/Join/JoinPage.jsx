@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import JoinHeader from "./components/JoinHeader";
 import JoinFooter from "./components/JoinFooter";
@@ -71,6 +72,9 @@ export const JoinPage = () => {
         setQueueInfo(json.data);
       } catch (err) {
         // Fallback to mock on network error
+        const errorMsg = err.message || "Could not load queue information";
+        toast.error(errorMsg);
+        setError(errorMsg);
         setQueueInfo(MOCK_DATA);
       } finally {
         setIsLoading(false);
@@ -83,6 +87,7 @@ export const JoinPage = () => {
     if (!canQuery || isJoining || !queueOpen) return;
     setIsJoining(true);
     setError("");
+    const loadingToast = toast.loading("Joining queue...");
     try {
       const json = await apiRequest("/tokens/issue", {
         method: "POST",
@@ -97,8 +102,13 @@ export const JoinPage = () => {
           tokenNumber: json.data.tokenNumber,
         }),
       );
+      toast.dismiss(loadingToast);
+      toast.success("Successfully joined queue!");
     } catch (err) {
-      setError(err.message || "Could not reserve spot.");
+      const errorMsg = err.message || "Could not reserve spot.";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     } finally {
       setIsJoining(false);
     }

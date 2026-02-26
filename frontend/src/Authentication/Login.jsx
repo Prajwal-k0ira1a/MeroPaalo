@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import { Button } from "./components/Button";
 import { Input } from "./components/Input";
 import { LeftSidebar } from "./components/LeftSidebar";
@@ -28,9 +29,12 @@ export const Login = () => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
+    const loadingToast = toast.loading("Logging in...");
     try {
       const user = await authService.login(formData.email, formData.password);
       localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
+      toast.dismiss(loadingToast);
+      toast.success(`Welcome back, ${user.name || user.email}!`);
       // Redirect based on role returned by the server
       if (user.role === "admin") {
         navigate("/admin");
@@ -40,7 +44,10 @@ export const Login = () => {
         navigate("/");
       }
     } catch (err) {
-      setError(err.message || "Login failed. Please try again.");
+      const errorMsg = err.message || "Login failed. Please try again.";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }

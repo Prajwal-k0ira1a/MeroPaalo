@@ -4,6 +4,7 @@ import StatCards from "./StatCards";
 import LiveQueueTable from "./LiveQueueTable";
 import PeakHoursChart from "./PeakHoursChart";
 import { adminApi } from "../../api/adminApi";
+import toast from "react-hot-toast";
 
 const EMPTY_DASHBOARD = {
   queueStatus: "closed",
@@ -86,7 +87,9 @@ export default function DashboardPage() {
       try {
         await loadDepartments();
       } catch (err) {
-        setError(err.message || "Failed to load departments");
+        const errorMsg = err.message || "Failed to load departments";
+        setError(errorMsg);
+        toast.error(errorMsg);
       } finally {
         setLoading(false);
       }
@@ -104,7 +107,9 @@ export default function DashboardPage() {
       try {
         await loadDepartmentData(selectedDepartmentId);
       } catch (err) {
-        setError(err.message || "Failed to load dashboard data");
+        const errorMsg = err.message || "Failed to load dashboard data";
+        setError(errorMsg);
+        toast.error(errorMsg);
       } finally {
         setLoading(false);
       }
@@ -122,12 +127,15 @@ export default function DashboardPage() {
         const queueDayDate = token.queueDay?.date;
         return queueDayDate ? isSameDay(queueDayDate, today) : true;
       })
-      .sort((a, b) => new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime())
+      .sort(
+        (a, b) =>
+          new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime(),
+      )
       .slice(0, 15)
       .map((token) => {
         const waitMinutes = Math.max(
           0,
-          Math.floor((Date.now() - new Date(token.issuedAt).getTime()) / 60000)
+          Math.floor((Date.now() - new Date(token.issuedAt).getTime()) / 60000),
         );
 
         return {
@@ -157,12 +165,12 @@ export default function DashboardPage() {
     tokens
       .filter((token) => isSameDay(token.issuedAt, today))
       .forEach((token) => {
-      const issued = new Date(token.issuedAt);
-      const issuedHour = issued.getHours();
-      const index = bins.findIndex((bin) => bin.hour24 === issuedHour);
-      if (index >= 0) {
-        bins[index].value += 1;
-      }
+        const issued = new Date(token.issuedAt);
+        const issuedHour = issued.getHours();
+        const index = bins.findIndex((bin) => bin.hour24 === issuedHour);
+        if (index >= 0) {
+          bins[index].value += 1;
+        }
       });
 
     let max = 0;
@@ -180,10 +188,16 @@ export default function DashboardPage() {
     if (!selectedDepartmentId) return;
     setLoading(true);
     setError("");
+    const loadingToast = toast.loading("Refreshing dashboard...");
     try {
       await loadDepartmentData(selectedDepartmentId);
+      toast.dismiss(loadingToast);
+      toast.success("Dashboard refreshed!");
     } catch (err) {
-      setError(err.message || "Failed to refresh dashboard");
+      const errorMsg = err.message || "Failed to refresh dashboard";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -192,26 +206,36 @@ export default function DashboardPage() {
   const handleServeNext = useCallback(async () => {
     if (!selectedDepartmentId) return;
     if (!queueActive) {
+      toast.error("Queue is not active. Activate queue first.");
       setError("Queue is not active. Activate queue first.");
       return;
     }
 
-    const firstOpenCounter = counters.find((counter) => counter.status === "open");
+    const firstOpenCounter = counters.find(
+      (counter) => counter.status === "open",
+    );
     const fallbackCounter = counters[0];
     const counterId = firstOpenCounter?._id || fallbackCounter?._id;
 
     if (!counterId) {
+      toast.error("No counter available. Create/open a counter first.");
       setError("No counter available. Create/open a counter first.");
       return;
     }
 
     setActionLoading(true);
     setError("");
+    const loadingToast = toast.loading("Serving next token...");
     try {
       await adminApi.serveNext(selectedDepartmentId, counterId);
+      toast.dismiss(loadingToast);
+      toast.success("Token served!");
       await loadDepartmentData(selectedDepartmentId);
     } catch (err) {
-      setError(err.message || "Failed to serve next token");
+      const errorMsg = err.message || "Failed to serve next token";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     } finally {
       setActionLoading(false);
     }
@@ -220,17 +244,24 @@ export default function DashboardPage() {
   const handleIssueToken = useCallback(async () => {
     if (!selectedDepartmentId) return;
     if (!queueActive) {
+      toast.error("Queue is not active. Activate queue first.");
       setError("Queue is not active. Activate queue first.");
       return;
     }
 
     setActionLoading(true);
     setError("");
+    const loadingToast = toast.loading("Issuing token...");
     try {
       await adminApi.issueToken(null, selectedDepartmentId);
+      toast.dismiss(loadingToast);
+      toast.success("Token issued successfully!");
       await loadDepartmentData(selectedDepartmentId);
     } catch (err) {
-      setError(err.message || "Failed to issue token");
+      const errorMsg = err.message || "Failed to issue token";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     } finally {
       setActionLoading(false);
     }
@@ -244,11 +275,23 @@ export default function DashboardPage() {
 
     setActionLoading(true);
     setError("");
+    const loadingToast = toast.loading("Activating queue...");
     try {
-      await adminApi.openQueueDay(null, selectedDepartmentId, today, startTime, endTime);
+      await adminApi.openQueueDay(
+        null,
+        selectedDepartmentId,
+        today,
+        startTime,
+        endTime,
+      );
+      toast.dismiss(loadingToast);
+      toast.success("Queue activated!");
       await loadDepartmentData(selectedDepartmentId);
     } catch (err) {
-      setError(err.message || "Failed to activate queue");
+      const errorMsg = err.message || "Failed to activate queue";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     } finally {
       setActionLoading(false);
     }
@@ -257,19 +300,21 @@ export default function DashboardPage() {
   const handleCloseQueue = useCallback(async () => {
     if (!selectedDepartmentId) return;
     if (dashboard.queueStatus === "closed") {
+      toast.error("Queue is already closed.");
       setError("Queue is already closed.");
       return;
     }
 
     setActionLoading(true);
     setError("");
+    const loadingToast = toast.loading("Closing queue...");
     try {
       const today = toLocalDateOnly();
       const queueDays = await adminApi.getQueueDays(selectedDepartmentId);
       const activeToday = (queueDays || []).find(
         (qd) =>
           toApiDateOnly(qd?.date) === today &&
-          (qd?.status === "active" || qd?.status === "paused")
+          (qd?.status === "active" || qd?.status === "paused"),
       );
 
       if (!activeToday?._id) {
@@ -277,9 +322,14 @@ export default function DashboardPage() {
       }
 
       await adminApi.closeQueueDay(activeToday._id);
+      toast.dismiss(loadingToast);
+      toast.success("Queue closed!");
       await loadDepartmentData(selectedDepartmentId);
     } catch (err) {
-      setError(err.message || "Failed to close queue");
+      const errorMsg = err.message || "Failed to close queue";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     } finally {
       setActionLoading(false);
     }
@@ -287,25 +337,37 @@ export default function DashboardPage() {
 
   const handleResetQueue = useCallback(async () => {
     if (!selectedDepartmentId) return;
-    if (!window.confirm("Regenerate queue for today? This will cancel waiting/called/serving tokens.")) {
+    if (
+      !window.confirm(
+        "Regenerate queue for today? This will cancel waiting/called/serving tokens.",
+      )
+    ) {
       return;
     }
 
     setActionLoading(true);
     setError("");
+    const loadingToast = toast.loading("Resetting queue...");
     try {
       const today = toLocalDateOnly();
       const queueDays = await adminApi.getQueueDays(selectedDepartmentId);
-      const todayQueueDay = (queueDays || []).find((qd) => toApiDateOnly(qd?.date) === today);
+      const todayQueueDay = (queueDays || []).find(
+        (qd) => toApiDateOnly(qd?.date) === today,
+      );
 
       if (!todayQueueDay?._id) {
         throw new Error("No queue-day found for today.");
       }
 
       await adminApi.resetQueueDay(todayQueueDay._id);
+      toast.dismiss(loadingToast);
+      toast.success("Queue regenerated!");
       await loadDepartmentData(selectedDepartmentId);
     } catch (err) {
-      setError(err.message || "Failed to regenerate queue");
+      const errorMsg = err.message || "Failed to regenerate queue";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     } finally {
       setActionLoading(false);
     }

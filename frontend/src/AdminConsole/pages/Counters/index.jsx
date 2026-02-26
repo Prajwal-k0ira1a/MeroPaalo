@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminApi } from "../../api/adminApi";
+import toast from "react-hot-toast";
 
 export default function CountersPage() {
   const [departments, setDepartments] = useState([]);
@@ -24,8 +25,8 @@ export default function CountersPage() {
     const merged = [...(staffList || []), ...(adminList || [])];
     setStaffUsers(
       merged.filter(
-        (u, idx, arr) => idx === arr.findIndex((x) => x._id === u._id)
-      )
+        (u, idx, arr) => idx === arr.findIndex((x) => x._id === u._id),
+      ),
     );
   }, []);
 
@@ -36,7 +37,9 @@ export default function CountersPage() {
       try {
         await loadData();
       } catch (err) {
-        setError(err.message || "Failed to load counters");
+        const errorMsg = err.message || "Failed to load counters";
+        setError(errorMsg);
+        toast.error(errorMsg);
       } finally {
         setLoading(false);
       }
@@ -51,7 +54,9 @@ export default function CountersPage() {
       try {
         await loadData(selectedDepartmentId);
       } catch (err) {
-        setError(err.message || "Failed to refresh counters");
+        const errorMsg = err.message || "Failed to refresh counters";
+        setError(errorMsg);
+        toast.error(errorMsg);
       } finally {
         setLoading(false);
       }
@@ -65,6 +70,7 @@ export default function CountersPage() {
     if (!canCreate || creating) return;
     setCreating(true);
     setError("");
+    const loadingToast = toast.loading("Creating counter...");
     try {
       await adminApi.createCounter(null, {
         counterName: counterName.trim(),
@@ -72,9 +78,14 @@ export default function CountersPage() {
         status: "open",
       });
       setCounterName("");
+      toast.dismiss(loadingToast);
+      toast.success("Counter created successfully!");
       await loadData(selectedDepartmentId);
     } catch (err) {
-      setError(err.message || "Failed to create counter");
+      const errorMsg = err.message || "Failed to create counter";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     } finally {
       setCreating(false);
     }
@@ -82,32 +93,48 @@ export default function CountersPage() {
 
   const onToggleStatus = async (counter) => {
     setError("");
+    const loadingToast = toast.loading("Updating counter status...");
     try {
       await adminApi.updateCounter(counter._id, null, {
         status: counter.status === "open" ? "closed" : "open",
       });
+      toast.dismiss(loadingToast);
+      toast.success("Counter status updated!");
       await loadData(selectedDepartmentId);
     } catch (err) {
-      setError(err.message || "Failed to update counter");
+      const errorMsg = err.message || "Failed to update counter";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     }
   };
 
   const onAssignStaff = async (counterId, staffId) => {
     setError("");
+    const loadingToast = toast.loading("Assigning staff...");
     try {
       await adminApi.assignCounterStaff(counterId, null, staffId || null);
+      toast.dismiss(loadingToast);
+      toast.success("Staff assigned successfully!");
       await loadData(selectedDepartmentId);
     } catch (err) {
-      setError(err.message || "Failed to assign staff");
+      const errorMsg = err.message || "Failed to assign staff";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     }
   };
 
   const getAssignableUsers = (counter) => {
-    const counterDeptId = String(counter.department?._id || counter.department || "");
+    const counterDeptId = String(
+      counter.department?._id || counter.department || "",
+    );
     return staffUsers.filter((user) => {
       if (user.role === "admin") return true;
       if (user.role !== "staff") return false;
-      return String(user.department?._id || user.department || "") === counterDeptId;
+      return (
+        String(user.department?._id || user.department || "") === counterDeptId
+      );
     });
   };
 
@@ -116,7 +143,8 @@ export default function CountersPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Counter Management</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Create counters, manage status, and assign staff based on backend data.
+          Create counters, manage status, and assign staff based on backend
+          data.
         </p>
       </div>
 
@@ -178,48 +206,55 @@ export default function CountersPage() {
               </tr>
             )}
             {counters.map((counter) => (
-              <tr key={counter._id} className="border-t border-gray-100 text-sm">
+              <tr
+                key={counter._id}
+                className="border-t border-gray-100 text-sm"
+              >
                 {(() => {
                   const assignableUsers = getAssignableUsers(counter);
                   return (
                     <>
-                <td className="py-3 font-medium text-gray-800">{counter.counterName}</td>
-                <td className="py-3 text-gray-600">
-                  {counter.department?.name || "Unassigned"}
-                </td>
-                <td className="py-3">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      counter.status === "open"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {counter.status}
-                  </span>
-                </td>
-                <td className="py-3">
-                  <select
-                    value={counter.staff?._id || counter.staff || ""}
-                    onChange={(e) => onAssignStaff(counter._id, e.target.value)}
-                    className="h-9 w-40 rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-700 outline-none focus:border-teal-500"
-                  >
-                    <option value="">Unassigned</option>
-                    {assignableUsers.map((staff) => (
-                      <option key={staff._id} value={staff._id}>
-                        {staff.name} ({staff.role})
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="py-3 text-right">
-                  <button
-                    onClick={() => onToggleStatus(counter)}
-                    className="rounded-lg border border-teal-600 px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50"
-                  >
-                    Mark {counter.status === "open" ? "Closed" : "Open"}
-                  </button>
-                </td>
+                      <td className="py-3 font-medium text-gray-800">
+                        {counter.counterName}
+                      </td>
+                      <td className="py-3 text-gray-600">
+                        {counter.department?.name || "Unassigned"}
+                      </td>
+                      <td className="py-3">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            counter.status === "open"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {counter.status}
+                        </span>
+                      </td>
+                      <td className="py-3">
+                        <select
+                          value={counter.staff?._id || counter.staff || ""}
+                          onChange={(e) =>
+                            onAssignStaff(counter._id, e.target.value)
+                          }
+                          className="h-9 w-40 rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-700 outline-none focus:border-teal-500"
+                        >
+                          <option value="">Unassigned</option>
+                          {assignableUsers.map((staff) => (
+                            <option key={staff._id} value={staff._id}>
+                              {staff.name} ({staff.role})
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="py-3 text-right">
+                        <button
+                          onClick={() => onToggleStatus(counter)}
+                          className="rounded-lg border border-teal-600 px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50"
+                        >
+                          Mark {counter.status === "open" ? "Closed" : "Open"}
+                        </button>
+                      </td>
                     </>
                   );
                 })()}

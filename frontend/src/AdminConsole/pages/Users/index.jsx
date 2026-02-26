@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminApi } from "../../api/adminApi";
+import toast from "react-hot-toast";
 
 const ROLE_OPTIONS = ["admin", "staff", "customer"];
 
@@ -26,7 +27,9 @@ export default function UsersPage() {
       setPendingRoles({});
       setPendingDepartments({});
     } catch (err) {
-      setError(err.message || "Failed to load users");
+      const errorMsg = err.message || "Failed to load users";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -56,7 +59,11 @@ export default function UsersPage() {
     }
   };
 
-  const onDepartmentChange = (userId, currentDepartmentId, nextDepartmentId) => {
+  const onDepartmentChange = (
+    userId,
+    currentDepartmentId,
+    nextDepartmentId,
+  ) => {
     setPendingDepartments((prev) => {
       const updated = { ...prev };
       if ((nextDepartmentId || "") === (currentDepartmentId || "")) {
@@ -68,8 +75,10 @@ export default function UsersPage() {
     });
   };
 
-  const pendingCount =
-    new Set([...Object.keys(pendingRoles), ...Object.keys(pendingDepartments)]).size;
+  const pendingCount = new Set([
+    ...Object.keys(pendingRoles),
+    ...Object.keys(pendingDepartments),
+  ]).size;
 
   const onDiscardChanges = () => {
     setPendingRoles({});
@@ -80,20 +89,27 @@ export default function UsersPage() {
     if (pendingCount === 0 || savingAll) return;
     setSavingAll(true);
     setError("");
+    const loadingToast = toast.loading("Saving changes...");
     try {
       const roleUpdates = Object.entries(pendingRoles).map(([userId, role]) =>
         adminApi.assignUserRole(userId, role),
       );
       await Promise.all(roleUpdates);
 
-      const departmentUpdates = Object.entries(pendingDepartments).map(([userId, departmentId]) =>
-        adminApi.assignUserDepartment(userId, departmentId || null),
+      const departmentUpdates = Object.entries(pendingDepartments).map(
+        ([userId, departmentId]) =>
+          adminApi.assignUserDepartment(userId, departmentId || null),
       );
       await Promise.all(departmentUpdates);
 
+      toast.dismiss(loadingToast);
+      toast.success("Changes saved successfully!");
       await loadUsers();
     } catch (err) {
-      setError(err.message || "Failed to update users");
+      const errorMsg = err.message || "Failed to update users";
+      setError(errorMsg);
+      toast.dismiss(loadingToast);
+      toast.error(errorMsg);
     } finally {
       setSavingAll(false);
     }
@@ -185,8 +201,10 @@ export default function UsersPage() {
             {users.map((user) => (
               <tr key={user._id} className="border-t border-gray-100 text-sm">
                 {(() => {
-                  const effectiveRole = pendingRoles[user._id] || user.role || "customer";
-                  const currentDepartmentId = user.department?._id || user.department || "";
+                  const effectiveRole =
+                    pendingRoles[user._id] || user.role || "customer";
+                  const currentDepartmentId =
+                    user.department?._id || user.department || "";
                   const selectedDepartmentId =
                     pendingDepartments[user._id] !== undefined
                       ? pendingDepartments[user._id]
@@ -194,42 +212,56 @@ export default function UsersPage() {
 
                   return (
                     <>
-                <td className="py-3 font-medium text-gray-800">{user.name || "-"}</td>
-                <td className="py-3 text-gray-600">{user.email || "-"}</td>
-                <td className="py-3 text-gray-600">{user.phone || "-"}</td>
-                <td className="py-3">
-                  <select
-                    value={selectedDepartmentId}
-                    onChange={(e) =>
-                      onDepartmentChange(user._id, currentDepartmentId, e.target.value)
-                    }
-                    disabled={savingAll || effectiveRole !== "staff"}
-                    className="h-9 w-40 rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-700 outline-none focus:border-teal-500 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <option value="">Unassigned</option>
-                    {departments.map((department) => (
-                      <option key={department._id} value={department._id}>
-                        {department.name}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="py-3">
-                  <select
-                    value={effectiveRole}
-                    onChange={(e) =>
-                      onRoleChange(user._id, user.role || "customer", e.target.value)
-                    }
-                    disabled={savingAll}
-                    className="h-9 w-36 rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-700 outline-none focus:border-teal-500 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {ROLE_OPTIONS.map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
-                  </select>
-                </td>
+                      <td className="py-3 font-medium text-gray-800">
+                        {user.name || "-"}
+                      </td>
+                      <td className="py-3 text-gray-600">
+                        {user.email || "-"}
+                      </td>
+                      <td className="py-3 text-gray-600">
+                        {user.phone || "-"}
+                      </td>
+                      <td className="py-3">
+                        <select
+                          value={selectedDepartmentId}
+                          onChange={(e) =>
+                            onDepartmentChange(
+                              user._id,
+                              currentDepartmentId,
+                              e.target.value,
+                            )
+                          }
+                          disabled={savingAll || effectiveRole !== "staff"}
+                          className="h-9 w-40 rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-700 outline-none focus:border-teal-500 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <option value="">Unassigned</option>
+                          {departments.map((department) => (
+                            <option key={department._id} value={department._id}>
+                              {department.name}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="py-3">
+                        <select
+                          value={effectiveRole}
+                          onChange={(e) =>
+                            onRoleChange(
+                              user._id,
+                              user.role || "customer",
+                              e.target.value,
+                            )
+                          }
+                          disabled={savingAll}
+                          className="h-9 w-36 rounded-lg border border-gray-300 bg-white px-2 text-sm text-gray-700 outline-none focus:border-teal-500 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {ROLE_OPTIONS.map((role) => (
+                            <option key={role} value={role}>
+                              {role}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
                     </>
                   );
                 })()}
