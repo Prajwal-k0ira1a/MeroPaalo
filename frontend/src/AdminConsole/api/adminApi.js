@@ -1,98 +1,62 @@
-import { apiRequest } from "../../lib/apiClient";
-
-const request = async (path, options = {}) => {
-  const json = await apiRequest(path, options);
-  return json?.data;
-};
-
-const withQuery = (path, query = {}) => {
-  const params = new URLSearchParams();
-  Object.entries(query).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      params.set(key, value);
-    }
-  });
-  const qs = params.toString();
-  return qs ? `${path}?${qs}` : path;
-};
+import apiClient from "../../api/apiClient";
 
 export const adminApi = {
-  getDepartments: () =>
-    request(withQuery("/departments")),
-  createDepartment: (payload) =>
-    request("/departments", {
-      method: "POST",
-      body: { ...payload },
-    }),
+  getDepartments: () => apiClient.get("/departments"),
+
+  createDepartment: (payload) => apiClient.post("/departments", payload),
+
   updateDepartment: (departmentId, payload) =>
-    request(`/departments/${departmentId}`, {
-      method: "PATCH",
-      body: { ...payload },
-    }),
+    apiClient.patch(`/departments/${departmentId}`, payload),
+
   deleteDepartment: (departmentId) =>
-    request(`/departments/${departmentId}`, {
-      method: "DELETE",
-    }),
+    apiClient.delete(`/departments/${departmentId}`),
+
   getDashboard: (departmentId) =>
-    request(withQuery("/admin/dashboard", { department: departmentId })),
+    apiClient.get("/admin/dashboard", { params: { department: departmentId } }),
+
   getTokens: (departmentId) =>
-    request(withQuery("/tokens", { department: departmentId })),
+    apiClient.get("/tokens", { params: { department: departmentId } }),
+
   getCounters: (departmentId) =>
-    request(withQuery("/counters", { department: departmentId })),
+    apiClient.get("/counters", { params: { department: departmentId } }),
+
   createCounter: (_unusedInstitutionId, payload) =>
-    request("/counters", {
-      method: "POST",
-      body: { ...payload },
-    }),
+    apiClient.post("/counters", payload),
+
   updateCounter: (counterId, _unusedInstitutionId, payload) =>
-    request(`/counters/${counterId}`, {
-      method: "PATCH",
-      body: { ...payload },
-    }),
+    apiClient.patch(`/counters/${counterId}`, payload),
+
   assignCounterStaff: (counterId, _unusedInstitutionId, staffId) =>
-    request(`/counters/${counterId}/assign-staff`, {
-      method: "PATCH",
-      body: { staffId },
-    }),
-  getUsers: (role) => request(withQuery("/users", { role })),
+    apiClient.patch(`/counters/${counterId}/assign-staff`, { staffId }),
+
+  getUsers: (role) => apiClient.get("/users", { params: { role } }),
+
   assignUserRole: (userId, role) =>
-    request(`/users/${userId}/role`, {
-      method: "PATCH",
-      body: { role },
-    }),
+    apiClient.patch(`/users/${userId}/role`, { role }),
+
   assignUserDepartment: (userId, departmentId) =>
-    request(`/users/${userId}/department`, {
-      method: "PATCH",
-      body: { departmentId: departmentId || null },
-    }),
+    apiClient.patch(`/users/${userId}/department`, { departmentId: departmentId || null }),
+
   getQueueDays: (departmentId) =>
-    request(withQuery("/queue-days", { department: departmentId })),
+    apiClient.get("/queue-days", { params: { department: departmentId } }),
+
   openQueueDay: (_unusedInstitutionId, departmentId, date, startTime = "09:00", endTime = "17:00") =>
-    request("/queue-days/open", {
-      method: "POST",
-      body: {
-        department: departmentId,
-        date,
-        startTime,
-        endTime,
-      },
+    apiClient.post("/queue-days/open", {
+      department: departmentId,
+      date,
+      startTime,
+      endTime,
     }),
+
   closeQueueDay: (queueDayId) =>
-    request(`/queue-days/${queueDayId}/close`, {
-      method: "PATCH",
-    }),
+    apiClient.patch(`/queue-days/${queueDayId}/close`),
+
   resetQueueDay: (queueDayId) =>
-    request(`/queue-days/${queueDayId}/reset`, {
-      method: "POST",
-    }),
+    apiClient.post(`/queue-days/${queueDayId}/reset`),
+
   serveNext: (departmentId, counterId, _unusedInstitutionId) =>
-    request("/tokens/serve-next", {
-      method: "POST",
-      body: { department: departmentId, counterId },
-    }),
+    apiClient.post("/tokens/serve-next", { department: departmentId, counterId }),
+
   issueToken: (_unusedInstitutionId, departmentId) =>
-    request("/tokens/issue", {
-      method: "POST",
-      body: { department: departmentId },
-    }),
+    apiClient.post("/tokens/issue", { department: departmentId }),
 };
