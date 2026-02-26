@@ -1,17 +1,69 @@
-# MeroPaalo – Full Stack Queue Management
+# 1. MeroPaalo – Smart Queue Management System
 
-This project is a complete queue management system with:
-
-- **Backend**: Node.js + Express + MongoDB + Socket.IO (`backend/`)
-- **Frontend**: React + Vite (`frontend/`)
-
-The system is now **single-organization and department-based only** – there is no Institution model.
+A real-time, department-based digital queue management system built to reduce physical waiting and improve service efficiency.
 
 ---
 
-## 1. Running the App
+# 2. Problem Statement
 
-### Backend
+Many service-based institutions still rely on manual token systems, leading to long waiting times, overcrowding, and lack of transparency. Customers often do not know their queue position or estimated waiting time, resulting in frustration and inefficiency.
+
+---
+
+# 3. Solution Overview
+
+MeroPaalo provides a digital queue management platform where users can join a queue via QR code and track their token status in real time. Administrators and staff can manage departments, counters, and live queue operations through an interactive dashboard with real-time updates powered by Socket.IO.
+
+---
+
+# 4. Unique Selling Proposition
+
+Unlike traditional token systems, MeroPaalo offers real-time queue tracking, QR-based token issuance, and a live administrative dashboard within a single lightweight web platform. It is designed to be scalable, simple, and easily deployable for institutions of any size.
+
+---
+
+# 5. Tech Stack
+
+## Frontend
+
+- React (Vite)
+- Axios
+- Socket.IO Client
+
+## Backend
+
+- Node.js
+- Express.js
+- MongoDB (Mongoose)
+- JWT Authentication
+- Socket.IO
+
+## Tools
+
+- Git & GitHub
+- MongoDB Atlas (optional cloud database)
+
+---
+
+# 6. Setup Instructions
+
+## Prerequisites
+
+- Node.js (v16 or later)
+- npm
+- MongoDB (local installation or MongoDB Atlas)
+- Git
+
+---
+
+## Step 1: Clone Repository
+
+```bash
+git clone <repository-url>
+cd MeroPaalo
+```
+
+## Step 2: Backend Setup
 
 ```bash
 cd backend
@@ -19,11 +71,10 @@ npm install
 npm run dev
 ```
 
-The API will be available at `http://localhost:5000/api`.
+Backend runs on:
+http://localhost:5000/api
 
-Make sure `backend/.env` exists as described in `backend/README.md`.
-
-### Frontend
+## Step 3: Frontend Setup
 
 ```bash
 cd frontend
@@ -31,110 +82,47 @@ npm install
 npm run dev
 ```
 
-The frontend runs at `http://localhost:5173` and talks to the backend via `VITE_API_BASE_URL` (defaults to `http://localhost:5000/api`).
+Frontend runs on:
+http://localhost:5173
 
----
+# 7. Environment Variables
 
-## 2. Main Flows (Frontend + Backend Together)
+Create a .env file inside the backend folder with the following:
+PORT=5000
 
-### 2.1 Public Join & Token Tracking
+DB_HOST=your_database_host
+DB_USER=your_database_username
+DB_PASS=your_database_password
+DB_NAME=your_database_name
 
-1. **Generate a QR code**
-   - Go to `http://localhost:5173/qr-generator`.
-   - Enter a **Department ID** (Mongo `_id` of a Department).
-   - A QR is rendered by `frontend/src/Join/QRGeneratorPage.jsx`, loading from:
-     - `GET /api/qr?department=<departmentId>` → `backend/src/controllers/qr.controller.js`.
+MONGODB_URI=your_mongodb_connection_string
 
-2. **Customer joins the queue**
-   - Scan the QR or visit:  
-     `http://localhost:5173/join?department=<departmentId>`
-   - `JoinPage` (`frontend/src/Join/JoinPage.jsx`) calls:
-     - `GET /api/public/queue/:departmentId/info` for live queue status.
-     - `POST /api/tokens/issue` with body `{ department }` to issue a token.
+JWT_SECRET=your_jwt_secret_key
+JWT_EXPIRES_IN=7d
 
-3. **Customer views live token status**
-   - After joining, the success card (`TokenSuccessCard`) links to:
-     - `/token-status?tokenId=<id>&department=<departmentId>&tokenNumber=<num>`
-   - `TokenPage` (`frontend/src/Token/TokenPage.jsx`) calls:
-     - `GET /api/tokens/:tokenId/status`
-     - `GET /api/public/queue/:departmentId/info` for queue info.
+ADMIN_EMAIL=your_admin_email
+ADMIN_PASSWORD=your_admin_password
 
-### 2.2 Admin Console (Queues & Dashboard)
+CLIENT_URL=http://localhost:5173
 
-The admin console UI is in `frontend/src/AdminConsole`:
+# 8. Deployment Link
 
-- Main shell: `AdminConsolePage.jsx`
-- Dashboard page: `pages/Dashboard/index.jsx`
-- Header: `pages/Dashboard/DashboardHeader.jsx`
-- API client: `api/adminApi.js`
+Live Deployment:
+https://meropaalo-queue-frontend.vercel.app/
 
-Key interactions:
+# 9. Team Members
 
-- On load, `DashboardPage`:
-  - Fetches departments: `GET /api/departments`.
-  - For the selected department, loads:
-    - `GET /api/admin/dashboard?department=<id>`
-    - `GET /api/tokens?department=<id>`
-    - `GET /api/counters?department=<id>`
+Susant Lamsal – Backend Developer (Logic Layer)
+Responsible for core system logic, API development, token generation, and authentication implementation.
 
-- **Activate Queue** button in `DashboardHeader` triggers:
-  - `adminApi.openQueueDay(...)` → `POST /api/queue-days/open` with body:
-    - `{ department, date, startTime, endTime }`
-  - Backend handler: `backend/src/controllers/queueDay.controller.js`.
+Subin Shrestha – Backend Developer (Logic Layer)
+Implemented queue algorithms, business rules, API security, and backend optimization.
 
-- **Issue Token** button in the Admin console triggers:
-  - `adminApi.issueToken(...)` → `POST /api/tokens/issue` with body `{ department }`.
+Sujal Shrestha – Frontend Developer (Interface Layer)
+Developed the React.js user interface including QR token screens, live queue dashboard, and public display interface.
 
-- **Serve Next** button in the Live Queue Table triggers:
-  - `adminApi.serveNext(...)` → `POST /api/tokens/serve-next` with body:
-    - `{ department, counterId }`.
+Prajwal Koirala – Database & Frontend Developer (Storage Layer)
+Designed database schema, ensured data consistency, and handled real-time synchronization between frontend and backend.
 
-The dashboard displays stats returned by `GET /api/admin/dashboard` (`backend/src/controllers/admin.controller.js`), including:
-
-- `queueStatus` (`active | paused | closed`)
-- `currentServingNumber`
-- `totalWaitingTokens`
-- `tokensToday`
-- `averageWaitTimeMinutes`
-- `totalCompletedToday`
-
-### 2.3 Staff Admin – Counters
-
-The staff/admin counters management UI is in:
-
-- `frontend/src/AdminConsole/pages/Counters/index.jsx`
-
-It uses `adminApi` to call:
-
-- `GET /api/departments`
-- `GET /api/counters?department=<id>`
-- `GET /api/users?role=staff` and `role=admin`
-- `POST /api/counters` to create counters
-- `PATCH /api/counters/:id` to toggle status
-- `PATCH /api/counters/:id/assign-staff` to assign/unassign a staff user
-
-Backend handlers live in:
-
-- `backend/src/controllers/department.controller.js`
-- `backend/src/controllers/counter.controller.js`
-- `backend/src/controllers/user.controller.js`
-
----
-
-## 3. How Things Are Wired (Simplified)
-
-- **Departments** are the core unit (queues). Everything else references a department.
-- **QueueDay** tracks the open/closed state for a department on a specific date.
-- **Token** links to a `QueueDay` and `Department` and represents a customer’s place in line.
-- **Counter** is a physical service point, optionally linked to a staff user.
-- **Display** rows show what token is currently being served on which counter.
-
-Real-time updates use Socket.IO rooms:
-
-- Department room: `dept:<departmentId>`
-- Token room: `token:<tokenId>`
-
-The backend emits events like `queue:statusChanged`, `token:issued`, `token:updated`, `display:updated`, and `dashboard:changed` which the frontend listens to (where implemented) for live UI updates.
-
-For detailed per-endpoint shapes (all request/response JSON), see `backend/README.md`.
-
+Grace Gautam – UI/UX Designer & Business Strategist (Cross-Layer Coordination)
+Managed wireframing, usability design, documentation, and overall team coordination.
